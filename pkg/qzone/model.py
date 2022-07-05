@@ -38,7 +38,7 @@ def get_picbo_and_richval(upload_result):
     return picbo, richval
 
 
-class QzoneManager:
+class QzoneOperator:
     """Qzone内容管理类"""
     uin = 0
     cookie_dict = {}
@@ -68,7 +68,8 @@ class QzoneManager:
         cookies = cookie.split(';')
         for cookie in cookies:
             cookie_pair = cookie.strip().split('=')
-            self.cookie_dict[cookie_pair[0]] = cookie_pair[1]
+            if len(cookie_pair)>=2:
+                self.cookie_dict[cookie_pair[0]] = cookie_pair[1]
 
         self.gtk = generate_gtk(self.cookie_dict['skey'])
         self.gtk2 = generate_gtk(self.cookie_dict['p_skey'])
@@ -134,7 +135,7 @@ class QzoneManager:
         else:
             raise Exception("上传图片失败")
 
-    def publish_emotion(self, text='', image_type='path', images=None):
+    def publish_emotion(self, text='', images=None, image_type='path'):
         """发表说说
         :return: 说说tid
         :except: 发表失败
