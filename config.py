@@ -41,3 +41,9 @@ api_ssl_context = (
     './cert/cert.pem',
     './cert/key.pem'
 )
+
+# 小程序的appid
+mini_program_appid = 'wx8f8f8f8f8f8f8f8f'
+
+# 小程序的secret
+mini_program_secret = '1234567890'
