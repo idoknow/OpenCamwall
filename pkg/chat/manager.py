@@ -7,6 +7,9 @@ import mirai
 from pathlib import Path
 import time
 import json
+import pkg.qzone.model
+import pkg.qzone.login
+import pkg.routines.qzone_routines
 import asyncio
 
 from mirai import At, AtAll, GroupMessage, MessageEvent, Mirai, Plain, StrangerMessage, WebSocketAdapter, FriendMessage, \
@@ -90,6 +93,23 @@ class ChatBot:
         print(event.sender.id, event.message_chain, sep=":")
         if event.sender.id == self.uin:
             return
+        elif '更新cookie' in str(event.message_chain):
+            chat_bot=pkg.chat.manager.get_inst()
+
+            # 向管理员发送QQ空间登录二维码
+            qzone_login = pkg.qzone.login.QzoneLoginManager()
+            cookies = qzone_login.login_via_qrcode(
+                qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
+
+            cookie_str = ""
+
+            for k in cookies:
+                cookie_str += "{}={};".format(k, cookies[k])
+
+            qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
+                                                       cookie_str)
+
+            chat_bot.send_message_to_admins(["[bot]已成功登录QQ空间"])
         else:
             openid = re.findall(r'#id{[-_\d\w]{28}}', str(event.message_chain))
             if len(openid) > 0:

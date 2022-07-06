@@ -1,8 +1,12 @@
 import base64
+import threading
+import time
 from datetime import datetime
 import re
 
 import requests
+
+import pkg.chat.manager
 
 
 def image_base64(image_path):
@@ -38,6 +42,10 @@ def get_picbo_and_richval(upload_result):
     return picbo, richval
 
 
+class RefreshQzoneTokenException(Exception):
+    pass
+
+
 class QzoneOperator:
     """Qzone内容管理类"""
     uin = 0
@@ -53,10 +61,17 @@ class QzoneOperator:
                       'Chrome/69.0.3497.100 Safari/537.36',
     }
 
-    def __init__(self, uin, cookie):
-        self.__reset(uin, cookie)
+    cookie_invalidated_callback = None
 
-    def __reset(self, uin, cookie):
+    keepalive_proxy_thread = None
+
+    def __init__(self, uin, cookie, keepalive=True, cookie_invalidated_callback=None):
+        self.cookie_invalidated_callback = cookie_invalidated_callback
+        self.__reset(uin, cookie, keepalive)
+
+    def __reset(self, uin, cookie, keepalive):
+        global inst
+
         if uin is None or cookie is None:
             raise Exception('需提供uin和cookie')
         if not isinstance(uin, int):
@@ -68,11 +83,35 @@ class QzoneOperator:
         cookies = cookie.split(';')
         for cookie in cookies:
             cookie_pair = cookie.strip().split('=')
-            if len(cookie_pair)>=2:
+            if len(cookie_pair) >= 2:
                 self.cookie_dict[cookie_pair[0]] = cookie_pair[1]
 
         self.gtk = generate_gtk(self.cookie_dict['skey'])
         self.gtk2 = generate_gtk(self.cookie_dict['p_skey'])
+
+        # if self.keepalive_proxy_thread!=None:
+        #     self.keepalive_proxy_thread.terminate()
+
+        if keepalive:
+            self.keepalive_proxy_thread = threading.Thread(target=self.__keepalive, args=(), daemon=True)
+            self.keepalive_proxy_thread.start()
+
+        inst = self
+
+    def __keepalive(self):
+        global inst
+        while True:
+            if inst != self:
+                return  # 如果不是当前实例，则退出
+            if self.qzone_token == '':
+                return
+            try:
+                self.refresh_qzone_token(attempt=10)
+            except RefreshQzoneTokenException:
+                self.qzone_token = ''
+                self.keepalive_proxy_thread = None
+                return
+            time.sleep(600)
 
     def refresh_qzone_token(self, attempt=1):
         """刷新qzone_token
@@ -92,7 +131,8 @@ class QzoneOperator:
                         return i + 1
             except Exception as e:
                 continue
-        raise Exception("刷新qzone_token失败")
+        self.cookie_invalidated_callback()
+        raise RefreshQzoneTokenException("刷新qzone_token失败")
 
     def upload_image_file(self, file_path):
         b64 = image_base64(file_path)

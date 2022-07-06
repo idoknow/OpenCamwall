@@ -11,13 +11,20 @@ import pkg.qzone.model
 
 import pkg.routines.qzone_routines
 
+def qzone_cookie_invalidated_callback():
+    chat_bot=pkg.chat.manager.get_inst()
+    chat_bot.send_message_to_admins(["[bot]qzone_token刷新失败,cookie可能已经失效,回复'更新cookie'进行重新登录"])
+
 if __name__ == '__main__':
+
+    # 建立数据库对象
     db_mgr = pkg.database.database.MySQLConnection(config.database_context['host'],
                                                    config.database_context['port'],
                                                    config.database_context['user'],
                                                    config.database_context['password'],
                                                    config.database_context['db'])
 
+    # 自动回复机器人
     chat_bot = pkg.chat.manager.ChatBot(config.qq_bot_uin,
                                         config.mirai_http_verify_key,
                                         config.auto_reply_message,
@@ -25,6 +32,7 @@ if __name__ == '__main__':
                                         config.admin_uins,
                                         config.admin_groups, db_mgr)
 
+    # RESTful API
     restful_api = pkg.webapi.api.RESTfulAPI(
         db_mgr,
         domain=config.api_domain,
@@ -39,6 +47,7 @@ if __name__ == '__main__':
 
     time.sleep(5)
 
+    # 向管理员发送QQ空间登录二维码
     qzone_login = pkg.qzone.login.QzoneLoginManager()
     cookies = qzone_login.login_via_qrcode(
         qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
@@ -51,7 +60,7 @@ if __name__ == '__main__':
     qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
                                                cookie_str)
 
-    chat_bot.send_message_to_admins(["[bot]已成功登录QQ空间,以上二维码已失效"])
+    chat_bot.send_message_to_admins(["[bot]已成功登录QQ空间"])
     # qzone_oper.publish_emotion("已上线")
 
     time.sleep(100000)

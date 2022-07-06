@@ -148,7 +148,7 @@ class MySQLConnection:
             'result': 'success',
             'page': page,
             'page_list': [i for i in range(1, int(total / capacity) + (2 if total % capacity > 0 else 1))],
-            'total_amount': total,
+            'table_amount': total,
             'status': status,
             'posts': posts
         }
