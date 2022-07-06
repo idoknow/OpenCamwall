@@ -35,6 +35,7 @@ if __name__ == '__main__':
     # RESTful API
     restful_api = pkg.webapi.api.RESTfulAPI(
         db_mgr,
+        port=config.api_port,
         domain=config.api_domain,
         ssl_context=config.api_ssl_context
     )

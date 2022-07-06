@@ -90,7 +90,7 @@ class MySQLConnection:
         self.cursor.execute(sql)
         result = self.cursor.fetchone()
 
-        pkg.routines.post.new_post_incoming({
+        pkg.routines.post_routines.new_post_incoming({
             'id': result[0],
             'text': text,
             'media': media,

@@ -15,6 +15,7 @@ from pkg.database.database import MySQLConnection
 
 inst = None
 
+
 class RESTfulAPI:
     app = None
 
