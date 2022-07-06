@@ -1,7 +1,6 @@
 import login
 import model
-
-
+from model import QzoneOperator
 
 
 if __name__ == '__main__':

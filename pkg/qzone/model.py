@@ -243,3 +243,11 @@ class QzoneOperator:
             return res.text
         else:
             raise Exception("删除失败: " + res.text)
+
+
+inst = None
+
+
+def get_inst() -> QzoneOperator:
+    global inst
+    return inst

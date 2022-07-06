@@ -5,6 +5,7 @@ import time
 
 import requests
 
+inst=None
 
 def callback(path):
     os.system("explorer {}".format(path))
@@ -18,6 +19,8 @@ class QzoneLoginManager:
     check_sig_url = "https://ptlogin2.qzone.qq.com/check_sig?pttype=1&uin={}&service=ptqrlogin&nodirect=1&ptsigx={}&s_url=https://qzs.qq.com/qzone/v5/loginsucc.html?para=izone&f_url=&ptlang=2052&ptredirect=100&aid=549000912&daid=5&j_later=0&low_login_hour=0&regmaster=0&pt_login_type=3&pt_aid=0&pt_aaid=16&pt_light=0&pt_3rd_aid=0"
 
     def __init__(self):
+        global inst
+        inst=self
         pass
 
     def getptqrtoken(self, qrsig):
@@ -88,6 +91,11 @@ class QzoneLoginManager:
 
                     return final_cookie_dict
         raise Exception("{}次尝试失败".format(attempts))
+
+
+def get_inst() -> QzoneLoginManager:
+    global inst
+    return inst
 
 
 if __name__ == '__main__':

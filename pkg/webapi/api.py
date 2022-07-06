@@ -8,9 +8,12 @@ import config
 import pkg
 import threading
 
+import pkg.routines.post_routines
+
 sys.path.append("../")
 from pkg.database.database import MySQLConnection
 
+inst = None
 
 class RESTfulAPI:
     app = None
@@ -33,8 +36,10 @@ class RESTfulAPI:
         @app.route('/postnew', methods=['GET'])
         def post_new():
             try:
-                print(self.db_mgr.post_new(request.args['text'], request.args['media'], bool(request.args['anonymous']),
-                                           int(request.args['qq']), request.args['openid']))
+                post_id = self.db_mgr.post_new(request.args['text'], request.args['media'],
+                                               bool(request.args['anonymous']),
+                                               int(request.args['qq']), request.args['openid'])
+
                 return '操作成功'
             except Exception as e:
                 return str(e)
@@ -147,14 +152,21 @@ class RESTfulAPI:
         self.domain = domain
         self.ssl_context = ssl_context
 
-        self.run_api()
+        # self.proxy_thread = threading.Thread(target=self.run_api, args=(), daemon=True)
+        #
+        # self.proxy_thread.start()
 
     def run_api(self):
         if self.domain != '' and self.ssl_context != None:
             self.app.config['SERVER_NAME'] = self.domain
-            self.app.run(host=self.host, port=self.port, ssl_context=self.ssl_context,threaded=True)
+            self.app.run(host=self.host, port=self.port, ssl_context=self.ssl_context)
         else:
-            self.app.run(host=self.host, port=self.port,threaded=True)
+            self.app.run(host=self.host, port=self.port)
+
+
+def get_inst() -> RESTfulAPI:
+    global inst
+    return inst
 
 
 if __name__ == '__main__':
@@ -164,6 +176,6 @@ if __name__ == '__main__':
                                                    config.database_context['password'],
                                                    config.database_context['db'])
 
-    api = RESTfulAPI(db_mgr, domain='localhost', ssl_context=config.api_ssl_context)
+    api = RESTfulAPI(db_mgr, domain=config.api_domain, ssl_context=config.api_ssl_context)
 
     time.sleep(100000)

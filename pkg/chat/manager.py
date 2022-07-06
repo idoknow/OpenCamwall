@@ -17,6 +17,8 @@ import sys
 sys.path.append("../")
 from pkg.database.database import MySQLConnection
 
+inst = None
+
 
 class ChatBot:
     uin = 0
@@ -31,6 +33,7 @@ class ChatBot:
 
     def __init__(self, uin: int, verify_key: str, auto_reply_message: str, qrcode_path: str,
                  admin_uins: set, admin_groups: set, db_mgr: MySQLConnection):
+        global inst
         self.uin = uin
         self.verify_key = verify_key
         self.auto_reply_message = auto_reply_message
@@ -62,6 +65,26 @@ class ChatBot:
             return self.on_group_message(event)
 
         self.bot = bot
+
+        inst = self
+
+    def send_message_to_admins(self, message_chain):
+        for admin in self.admin_uins:
+            self.send_message('person', admin, message_chain)
+
+    def send_message_to_admin_groups(self, message_chain):
+        for admin_group in self.admin_groups:
+            self.send_message('group', admin_group, message_chain)
+
+    def send_message(self, target_type, target, message):
+        if target_type == 'group':
+            send_task = self.bot.send_group_message(target, message)
+            asyncio.run(send_task)
+        elif target_type == 'person':
+            send_task = self.bot.send_friend_message(target, message)
+            asyncio.run(send_task)
+        else:
+            raise Exception('target_type error')
 
     async def on_message(self, event: MessageEvent):
         print(event.sender.id, event.message_chain, sep=":")
@@ -140,3 +163,8 @@ class ChatBot:
                         except Exception as e:
                             return await self.bot.send_group_message(event.group.id,
                                                                      [Plain("[bot]通过失败:{}".format(str(e)))])
+
+
+def get_inst() -> ChatBot:
+    global inst
+    return inst

@@ -4,28 +4,37 @@ import time
 import pymysql as pymysql
 import requests
 
+import pkg.routines.post_routines
+
+inst = None
+
 
 def raw_to_escape(raw):
     return raw.replace("\\", "\\\\").replace('\'', '‘')
 
+
 def get_qq_nickname(uin):
-    url = "https://r.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?g_tk=1518561325&uins={}".format(uin)
+    url = "https://r.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins={}".format(uin)
     response = requests.get(url)
     text = response.content.decode('gbk', 'ignore')
     json_data = json.loads(text.replace("portraitCallBack(", "")[:-1])
-    nickname=json_data[str(uin)][6]
+    nickname = json_data[str(uin)][6]
     return nickname
+
 
 class MySQLConnection:
     connection = None
     cursor = None
 
     def __init__(self, host, port, user, password, database):
+        global inst
         self.host = host
         self.port = port
         self.user = user
         self.password = password
         self.database = database
+
+        inst = self
 
         self.connect()
 
@@ -80,6 +89,15 @@ class MySQLConnection:
         sql = "select `id` from `posts` where `openid`='{}' order by `id` desc limit 1".format(openid)
         self.cursor.execute(sql)
         result = self.cursor.fetchone()
+
+        pkg.routines.post.new_post_incoming({
+            'id': result[0],
+            'text': text,
+            'media': media,
+            'anonymous': anonymous,
+            'qq': qq,
+        })
+
         return result[0]
 
     def pull_one_post(self, post_id=-1, status='', openid='', order='asc'):
@@ -155,6 +173,8 @@ class MySQLConnection:
         if review != '':
             sql = "update `posts` set `review`='{}' where `id`={}".format(review, post_id)
             self.cursor.execute(sql)
+
+        pkg.routines.post_routines.post_status_changed(post_id, new_status)
         # self.connection.commit()
 
     def pull_log_list(self, capacity=10, page=1):
@@ -217,7 +237,7 @@ class MySQLConnection:
             result['accounts'].append({
                 'id': account[0],
                 'qq': account[2],
-                'nick':get_qq_nickname(account[2]),
+                'nick': get_qq_nickname(account[2]),
                 'resgister_time': account[3],
                 'identity': account[4],
             })
@@ -339,6 +359,14 @@ class MySQLConnection:
 
     def user_feedback(self, openid, content, media):
         self.ensure_connection()
-        sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`) values('{}','{}',{},'{}')".format(openid, content,int(time.time()), media)
+        sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`) values('{}','{}',{},'{}')".format(openid,
+                                                                                                                content,
+                                                                                                                int(time.time()),
+                                                                                                                media)
         self.cursor.execute(sql)
         return 'success'
+
+
+def get_inst() -> MySQLConnection:
+    global inst
+    return inst
