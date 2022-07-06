@@ -22,10 +22,22 @@ admin_uins = [1010553892]
 admin_groups = [1025599757]
 
 # MySQL数据库
-database_context={
+database_context = {
     'host': 'localhost',
     'port': 3306,
     'user': 'root',
     'password': '000112',
     'db': 'camwall_test'
+}
+
+# RESTful API 监听端口
+api_port = 8989
+
+# RESTful API 域名
+api_domain = 'localhost'
+
+# RESTful API SSL 证书路径
+api_ssl_context={
+    'cert': './cert/cert.pem',
+    'key': './cert/key.pem'
 }
