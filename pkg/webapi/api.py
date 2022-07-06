@@ -17,9 +17,14 @@ class RESTfulAPI:
 
     db_mgr = None
 
+    host = ''
+    port = 8989
+    domain = ''
+    ssl_context = None
+
     proxy_thread = None
 
-    def __init__(self, db: MySQLConnection, port=8989, host='0.0.0.0'):
+    def __init__(self, db: MySQLConnection, port=8989, host='0.0.0.0', domain='', ssl_context=None):
         self.db_mgr = db
 
         app = Flask(__name__)
@@ -66,7 +71,7 @@ class RESTfulAPI:
         def cancel_one_post():
             try:
                 # 获取id
-                post_id=self.db_mgr.pull_one_post(status='未审核', openid=request.args['openid'])['id']
+                post_id = self.db_mgr.pull_one_post(status='未审核', openid=request.args['openid'])['id']
                 self.db_mgr.update_post_status(post_id, '取消')
 
                 return 'success'
@@ -137,9 +142,19 @@ class RESTfulAPI:
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"
 
-        self.proxy_thread = threading.Thread(target=self.app.run, args=(host, port), daemon=True)
+        self.host = host
+        self.port = port
+        self.domain = domain
+        self.ssl_context = ssl_context
 
-        self.proxy_thread.start()
+        self.run_api()
+
+    def run_api(self):
+        if self.domain != '' and self.ssl_context != None:
+            self.app.config['SERVER_NAME'] = self.domain
+            self.app.run(host=self.host, port=self.port, ssl_context=self.ssl_context,threaded=True)
+        else:
+            self.app.run(host=self.host, port=self.port,threaded=True)
 
 
 if __name__ == '__main__':
@@ -149,6 +164,6 @@ if __name__ == '__main__':
                                                    config.database_context['password'],
                                                    config.database_context['db'])
 
-    api = RESTfulAPI(db_mgr)
+    api = RESTfulAPI(db_mgr, domain='localhost', ssl_context=config.api_ssl_context)
 
     time.sleep(100000)

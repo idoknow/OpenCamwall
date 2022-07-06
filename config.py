@@ -37,7 +37,7 @@ api_port = 8989
 api_domain = 'localhost'
 
 # RESTful API SSL 证书路径
-api_ssl_context={
-    'cert': './cert/cert.pem',
-    'key': './cert/key.pem'
-}
+api_ssl_context = (
+    './cert/cert.pem',
+    './cert/key.pem'
+)
