@@ -1,4 +1,5 @@
 import json
+import threading
 import time
 
 import pymysql as pymysql
@@ -174,8 +175,11 @@ class MySQLConnection:
             sql = "update `posts` set `review`='{}' where `id`={}".format(review, post_id)
             self.cursor.execute(sql)
 
-        pkg.routines.post_routines.post_status_changed(post_id, new_status)
+        temp_thread = threading.Thread(target=pkg.routines.post_routines.post_status_changed,
+                                       args=(post_id, new_status), daemon=True)
+        # pkg.routines.post_routines.post_status_changed
         # self.connection.commit()
+        temp_thread.start()
 
     def pull_log_list(self, capacity=10, page=1):
         self.ensure_connection()

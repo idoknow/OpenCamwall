@@ -44,7 +44,8 @@ if __name__ == '__main__':
     )
 
     # 小程序图片获取
-    emotion_publisher=pkg.qzone.publisher.EmotionPublisher(
+    emotion_publisher = pkg.qzone.publisher.EmotionPublisher(
+        env_id=config.cloud_env_id,
         app_id=config.mini_program_appid,
         app_secret=config.mini_program_secret
     )
@@ -59,7 +60,7 @@ if __name__ == '__main__':
 
     # 向管理员发送QQ空间登录二维码
     qzone_login = pkg.qzone.login.QzoneLoginManager()
-    if config.qzone_cookie=='':
+    if config.qzone_cookie == '':
         cookies = qzone_login.login_via_qrcode(
             qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
 

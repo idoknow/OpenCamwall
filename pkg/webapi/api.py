@@ -38,7 +38,7 @@ class RESTfulAPI:
         def post_new():
             try:
                 post_id = self.db_mgr.post_new(request.args['text'], request.args['media'],
-                                               bool(request.args['anonymous']),
+                                               True if request.args['anonymous'] == 'true' else False,
                                                int(request.args['qq']), request.args['openid'])
 
                 return '操作成功'
