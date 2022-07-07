@@ -1,12 +1,6 @@
 from email.quoprimime import quote
-from pydoc import plain
 import re
-import threading
-import requests
-import mirai
 from pathlib import Path
-import time
-import json
 import pkg.qzone.model
 import pkg.qzone.login
 import pkg.routines.qzone_routines

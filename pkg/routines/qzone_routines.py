@@ -4,8 +4,7 @@ import pkg.chat.manager
 import pkg.database.database
 import pkg.qzone.publisher
 
-from mirai import At, AtAll, GroupMessage, MessageEvent, Mirai, Plain, StrangerMessage, WebSocketAdapter, FriendMessage, \
-    Image
+from mirai import Image
 
 
 def login_via_qrcode_callback(path):

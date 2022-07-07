@@ -5,8 +5,6 @@ from flask import Flask, request
 import sys
 
 import config
-import pkg
-import threading
 
 import pkg.routines.post_routines
 
