@@ -130,7 +130,7 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
                 numbers = indexNumber(rest_text)
 
                 for number in numbers:
-                    if number[1] < point < number[1] + len(number[0]) and number[1]!=0:
+                    if number[1] < point < number[1] + len(number[0]) and number[1] != 0:
                         point = number[1]
                         break
 
@@ -239,12 +239,19 @@ class EmotionPublisher:
             except Exception as e:
                 print("获取小程序储存access_token失败:", e)
 
-    def refresh_access_token(self):
-        url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}".format(
-            self.app_id, self.app_secret)
-        res = requests.get(url, verify=False)
-        resjson = json.loads(res.text)
-        self.access_token = resjson["access_token"]
+    def refresh_access_token(self, attempts=5):
+        for i in range(5):
+            try:
+                url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}".format(
+                    self.app_id, self.app_secret)
+                res = requests.get(url)
+                resjson = json.loads(res.text)
+                self.access_token = resjson["access_token"]
+                return
+            except Exception as e:
+                if i == attempts - 1:
+                    raise e
+                continue
 
     def prepare_post(self, post):
         global text_render_font
@@ -275,7 +282,6 @@ class EmotionPublisher:
             image_files.append(self.downloadCloudImage(media, 'cache/{}'.format(int(time.time()))))
 
         pkg.qzone.model.get_inst().publish_emotion(text, image_files)
-
 
     def downloadCloudImage(self, cloud, path):
         try:
