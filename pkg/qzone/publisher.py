@@ -123,7 +123,6 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
         else:
             rest_text = line
             while True:
-                # print("rest:",rest_text)
                 # 分割最前面的一行
                 point = int(len(rest_text) * (text_width / line_width))
 
@@ -131,7 +130,7 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
                 numbers = indexNumber(rest_text)
 
                 for number in numbers:
-                    if number[1] < point < number[1] + len(number[0]):
+                    if number[1] < point < number[1] + len(number[0]) and number[1]!=0:
                         point = number[1]
                         break
 
@@ -325,7 +324,7 @@ if __name__ == '__main__':
         "openid": "",
         "qq": "",
         "timestamp": 1648184113,
-        "text": "我",
+        "text": "我111111111111111111111111111111杀杀杀杀杀杀杀杀杀杀杀杀杀杀杀顶顶顶顶顶顶顶顶顶顶顶顶法国呱呱呱呱呱呱古古怪怪",
         "media": "[]",
         "anonymous": 1,
         "status": "通过",
