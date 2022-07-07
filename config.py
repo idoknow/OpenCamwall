@@ -9,6 +9,9 @@ mirai_http_verify_key = 'yirimirai'
 # QQ空间账号
 qzone_uin = 0
 
+# 预置Qzone cookie,若没有,将会在启动时请求管理员扫码
+qzone_cookie = ''
+
 # 自动回复消息
 auto_reply_message = '[bot]自动化接稿系统接管，请扫码进入小程序投稿(QQ可扫)，信息反馈请到群733524559:\n\n'
 
