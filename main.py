@@ -8,12 +8,15 @@ import pkg.database.database
 import pkg.webapi.api
 import pkg.qzone.login
 import pkg.qzone.model
+import pkg.qzone.publisher
 
 import pkg.routines.qzone_routines
 
+
 def qzone_cookie_invalidated_callback():
-    chat_bot=pkg.chat.manager.get_inst()
+    chat_bot = pkg.chat.manager.get_inst()
     chat_bot.send_message_to_admins(["[bot]qzone_token刷新失败,cookie可能已经失效,回复'更新cookie'进行重新登录"])
+
 
 if __name__ == '__main__':
 
@@ -40,6 +43,12 @@ if __name__ == '__main__':
         ssl_context=config.api_ssl_context
     )
 
+    # 小程序图片获取
+    emotion_publisher=pkg.qzone.publisher.EmotionPublisher(
+        app_id=config.mini_program_appid,
+        app_secret=config.mini_program_secret
+    )
+
     chat_bot_thread = threading.Thread(target=chat_bot.bot.run, args=(), daemon=True)
     restful_api_thread = threading.Thread(target=restful_api.run_api, args=(), daemon=True)
 
@@ -50,18 +59,24 @@ if __name__ == '__main__':
 
     # 向管理员发送QQ空间登录二维码
     qzone_login = pkg.qzone.login.QzoneLoginManager()
-    cookies = qzone_login.login_via_qrcode(
-        qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
+    if config.qzone_cookie=='':
+        cookies = qzone_login.login_via_qrcode(
+            qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
 
-    cookie_str = ""
+        cookie_str = ""
 
-    for k in cookies:
-        cookie_str += "{}={};".format(k, cookies[k])
+        for k in cookies:
+            cookie_str += "{}={};".format(k, cookies[k])
 
-    qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
-                                               cookie_str)
+        qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
+                                                   cookie_str)
+        print(cookie_str)
+        chat_bot.send_message_to_admins(["[bot]已成功通过二维码登录QQ空间"])
+    else:
+        qzone_oper = pkg.qzone.model.QzoneOperator(config.qzone_uin,
+                                                   config.qzone_cookie)
+        chat_bot.send_message_to_admins(["[bot]已成功使用提供的cookie登录QQ空间"])
 
-    chat_bot.send_message_to_admins(["[bot]已成功登录QQ空间"])
     # qzone_oper.publish_emotion("已上线")
 
     time.sleep(100000)
