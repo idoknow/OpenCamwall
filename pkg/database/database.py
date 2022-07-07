@@ -6,6 +6,7 @@ import pymysql as pymysql
 import requests
 
 import pkg.routines.post_routines
+import pkg.routines.feedback_routines
 
 inst = None
 
@@ -363,10 +364,16 @@ class MySQLConnection:
 
     def user_feedback(self, openid, content, media):
         self.ensure_connection()
-        sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`) values('{}','{}',{},'{}')".format(openid,
-                                                                                                                content,
-                                                                                                                int(time.time()),
-                                                                                                                media)
+        sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`)" \
+              " values('{}','{}',{},'{}')".format(openid,
+                                                  content,
+                                                  int(time.time()),
+                                                  media)
+
+        temp_thread = threading.Thread(target=pkg.routines.feedback_routines.receive_feedback, args=(openid,content),
+                                       daemon=True)
+        temp_thread.start()
+
         self.cursor.execute(sql)
         return 'success'
 

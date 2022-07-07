@@ -138,7 +138,7 @@ class RESTfulAPI:
             try:
                 result = self.db_mgr.user_feedback(request.args['openid'], request.args['content'],
                                                    media=request.args['media'])
-                return json.dumps(result, ensure_ascii=False)
+                return result
             except Exception as e:
                 return "失败:{}".format(str(e))
 
