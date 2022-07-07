@@ -45,6 +45,9 @@ api_ssl_context = (
     './cert/key.pem'
 )
 
+# 小程序云开发的环境id
+cloud_env_id = 'dev-0'
+
 # 小程序的appid
 mini_program_appid = 'wx8f8f8f8f8f8f8f8f'
 
