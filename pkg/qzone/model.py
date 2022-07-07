@@ -7,6 +7,7 @@ import re
 import requests
 
 import pkg.chat.manager
+import pkg.routines.qzone_routines
 
 
 def image_base64(image_path):
@@ -97,6 +98,10 @@ class QzoneOperator:
             self.keepalive_proxy_thread.start()
 
         inst = self
+
+        # 发送所有正在等待的说说
+        temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(), daemon=True)
+        temp_thread.start()
 
     def __keepalive(self):
         global inst

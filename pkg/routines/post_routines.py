@@ -3,6 +3,8 @@ import json
 import pkg.chat.manager
 import pkg.database.database
 
+import pkg.routines.qzone_routines
+
 
 def new_post_incoming(post_data):
     chat_inst = pkg.chat.manager.get_inst()
@@ -32,3 +34,5 @@ def post_status_changed(post_id, new_status):
                                                                                 "id:##{}\n内容:{}\n图片:{}张\n原因:{}"
                                .format('匿名' if post['anonymous'] else '不匿名', post_id, post['text'],
                                        str(len(json.loads(post['media']))), post['review']))
+    elif new_status == '通过':
+        pkg.routines.qzone_routines.clean_pending_posts()
