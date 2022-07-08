@@ -1,4 +1,5 @@
 import base64
+import json
 import threading
 import time
 from datetime import datetime
@@ -69,6 +70,7 @@ class QzoneOperator:
     def __init__(self, uin, cookie, keepalive=True, cookie_invalidated_callback=None):
         self.cookie_invalidated_callback = cookie_invalidated_callback
         self.__reset(uin, cookie, keepalive)
+        print("QzoneOperator初始化完成:uin={}".format(uin))
 
     def __reset(self, uin, cookie, keepalive):
         global inst
@@ -93,11 +95,13 @@ class QzoneOperator:
         # if self.keepalive_proxy_thread!=None:
         #     self.keepalive_proxy_thread.terminate()
 
+        inst = self
+
+        self.refresh_qzone_token(attempt=5)
+
         if keepalive:
             self.keepalive_proxy_thread = threading.Thread(target=self.__keepalive, args=(), daemon=True)
             self.keepalive_proxy_thread.start()
-
-        inst = self
 
         # 发送所有正在等待的说说
         temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(), daemon=True)
@@ -108,12 +112,11 @@ class QzoneOperator:
         while True:
             if inst != self:
                 return  # 如果不是当前实例，则退出
-            if self.qzone_token == '':
+            if self.qzone_token == 'invalidated':
                 return
             try:
                 self.refresh_qzone_token(attempt=10)
             except RefreshQzoneTokenException:
-                self.qzone_token = ''
                 self.keepalive_proxy_thread = None
                 return
             time.sleep(600)
@@ -137,6 +140,7 @@ class QzoneOperator:
             except Exception as e:
                 continue
         self.cookie_invalidated_callback()
+        self.qzone_token = 'invalidated'
         raise RefreshQzoneTokenException("刷新qzone_token失败")
 
     def upload_image_file(self, file_path):
@@ -288,6 +292,43 @@ class QzoneOperator:
             return res.text
         else:
             raise Exception("删除失败: " + res.text)
+
+    def get_visitor_amount_data(self):
+        res = requests.get(
+            url="https://h5.qzone.qq.com/proxy/domain/g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_simple?"
+                "uin={}&mask=2&g_tk={}&page=1&fupdate=1".format(
+                self.uin, self.gtk2),
+            cookies=self.cookie_dict)
+        json_text = res.text.replace("_Callback(", '')[:-2]
+
+        json_obj = json.loads(json_text)
+        visit_count = json_obj['data']['modvisitcount'][0]
+        return {
+            'today': visit_count['todaycount'],
+            'total': visit_count['totalcount'],
+        }
+
+    def get_emotion_list(self,num=10):
+        res = requests.get(
+            url="https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?"
+                "uin={}&ftype=0&sort=0&pos=0&num={}&replynum=100&g_tk={}&callback=_preloadCallback"
+                "&code_version=1&format=jsonp&need_private_comment=1&g_tk={}".format(self.uin,num, self.gtk2, self.gtk2),
+            cookies=self.cookie_dict)
+        json_text = res.text.replace("_preloadCallback(", '')[:-2]
+        json_obj = json.loads(json_text)
+        # print(json_obj)
+        result = {
+            'code': 200,
+            'data': []
+        }
+        for msg in json_obj['msglist']:
+            result['data'].append({
+                'tid': msg['tid'],
+                'content': msg['content'],
+                'time': msg['created_time'],
+            })
+
+        return result
 
 
 inst = None

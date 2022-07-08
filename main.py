@@ -12,6 +12,9 @@ import pkg.qzone.publisher
 
 import pkg.routines.qzone_routines
 
+import pkg.audit.recorder.visitors
+import pkg.audit.recorder.likers
+
 
 def qzone_cookie_invalidated_callback():
     chat_bot = pkg.chat.manager.get_inst()
@@ -72,19 +75,26 @@ def main():
                                                    cookie_str,
                                                    cookie_invalidated_callback=qzone_cookie_invalidated_callback)
         print(cookie_str)
-        chat_bot.send_message_to_admins(["[bot]已成功通过二维码登录QQ空间"])
+        chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
     else:
         qzone_oper = pkg.qzone.model.QzoneOperator(config.qzone_uin,
                                                    config.qzone_cookie,
                                                    cookie_invalidated_callback=qzone_cookie_invalidated_callback)
-        chat_bot.send_message_to_admins(["[bot]已成功使用提供的cookie登录QQ空间"])
+        chat_bot.send_message_to_admins(["[bot]已使用提供的cookie登录QQ空间"])
 
     # qzone_oper.publish_emotion("已上线")
 
+    # 启动分析程序
+    visitor_recorder_thread = threading.Thread(target=pkg.audit.recorder.visitors.initialize, args=(), daemon=True)
+    visitor_recorder_thread.start()
+
+    time.sleep(3)
+
+    liker_recorder_thread=threading.Thread(target=pkg.audit.recorder.likers.initialize_liker_recorder(), args=(), daemon=True)
+    liker_recorder_thread.start()
 
 
 if __name__ == '__main__':
     main()
-    pkg.qzone.model.get_inst().publish_emotion("已上线")
-    pkg.qzone.model.get_inst().get_visitor_amount_data()
+    # print(pkg.qzone.model.get_inst().get_visitor_amount_data())
     time.sleep(100000)
