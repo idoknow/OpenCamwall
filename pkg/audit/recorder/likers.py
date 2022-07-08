@@ -1,7 +1,6 @@
 # 单条说说点赞量分析
 
-from cmath import e, pi
-from ctypes import util
+from cmath import e
 import re
 import threading
 import requests
@@ -12,9 +11,8 @@ import pkg.database.database
 import pkg.audit.recorder.visitors
 import pkg.qzone.model
 
-QQ = "2297454588"
 EMOTION_INFO_API = "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/qz_opcnt2?_stp={" \
-                   "}&unikey=http://user.qzone.qq.com/" + QQ + "/mood/{}&face=0&fupdate=1 "
+                   "}&unikey=http://user.qzone.qq.com/{}/mood/{}&face=0&fupdate=1 "
 
 
 class Emotion:
@@ -48,7 +46,7 @@ class Emotion:
     def record(self, interval):
         print("record:eid:{} pid:{}".format(self.eid, self.pid))
         nowmill = int(time.time()) * 1000
-        url = EMOTION_INFO_API.format(nowmill, self.eid)
+        url = EMOTION_INFO_API.format(nowmill,pkg.qzone.model.get_inst().uin, self.eid)
         # print(url)
         resp = requests.get(url)
 

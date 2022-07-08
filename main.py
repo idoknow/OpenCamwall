@@ -14,6 +14,7 @@ import pkg.routines.qzone_routines
 
 import pkg.audit.recorder.visitors
 import pkg.audit.recorder.likers
+import pkg.audit.analyzer.analyzer
 
 
 def qzone_cookie_invalidated_callback():
@@ -90,8 +91,13 @@ def main():
 
     time.sleep(3)
 
-    liker_recorder_thread=threading.Thread(target=pkg.audit.recorder.likers.initialize_liker_recorder(), args=(), daemon=True)
+    liker_recorder_thread=threading.Thread(target=pkg.audit.recorder.likers.initialize_liker_recorder, args=(), daemon=True)
     liker_recorder_thread.start()
+
+    time.sleep(3)
+
+    analyzer_thread = threading.Thread(target=pkg.audit.analyzer.analyzer.initialize, args=(), daemon=True)
+    analyzer_thread.start()
 
 
 if __name__ == '__main__':

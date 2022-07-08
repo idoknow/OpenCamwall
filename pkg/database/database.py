@@ -296,6 +296,54 @@ class MySQLConnection:
 
         return result
 
+    def fetch_events(self, begin_ts, end_ts, page, capacity, event_type='', json_like=''):
+        self.ensure_connection()
+
+        result = {
+            'result': 'success',
+            'eligible_amount': 0,
+            'page': page,
+            'capacity': capacity,
+            'beginning': begin_ts,
+            'ending': end_ts,
+            'events': []
+        }
+
+        type_condition = ''
+        if event_type != '':
+            type_condition = "and `type`='{}'".format(event_type)
+
+        json_like_condition = ''
+        if json_like != '':
+            json_like_condition = "and `json` like '%{}%'".format(json_like)
+
+        # 获取符合必须条件的数量
+        sql = "select count(*) from `events` where `timestamp`>={} and `timestamp`<={} {} {}".format(begin_ts, end_ts,
+                                                                                                     type_condition,
+                                                                                                     json_like_condition)
+        self.cursor.execute(sql)
+        eligible_count = self.cursor.fetchone()[0]
+        result['eligible_amount'] = eligible_count
+
+        # 分页获取符合必须条件的数据
+        limit_statement = "limit {},{}".format((page - 1) * capacity, capacity)
+        sql = "select * from `events` where `timestamp`>={} and `timestamp`<={} {} {} {}".format(begin_ts, end_ts,
+                                                                                                 type_condition,
+                                                                                                 json_like_condition,
+                                                                                                 limit_statement)
+        self.cursor.execute(sql)
+        events = self.cursor.fetchall()
+
+        for event in events:
+            result['events'].append({
+                'id': event[0],
+                'type': event[1],
+                'timestamp': event[2],
+                'json': event[3],
+            })
+
+        return result
+
     def fetch_static_data(self, key):
         self.ensure_connection()
         sql = "select * from `static_data` where `key`='{}'".format(key)
@@ -317,11 +365,29 @@ class MySQLConnection:
     def fetch_content_list(self, capacity, page):
         self.ensure_connection()
         limit_statement = "limit {},{}".format((page - 1) * capacity, capacity)
-        sql = "select count(*) \nfrom (\n\tselect p.id pid,p.openid,e.id eid,p.`status` `status`,(\n\t\tcase \n\t\twhen p.`timestamp`is null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen p.`timestamp`\n\t\twhen (e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(p.`timestamp`,e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tleft outer join emotions e\n\ton p.id=e.pid\n    \n\tunion\n    \n\tselect p.id pid,p.openid,e.id eid,p.`status` `status`,(\n\t\tcase \n\t\twhen p.`timestamp`is null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen p.`timestamp`\n\t\twhen (e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(p.`timestamp`,e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tright outer join emotions e\n\ton p.id=e.pid\n) t\norder by gr_time desc"
+        sql = "select count(*) \nfrom (\n\tselect p.id pid,p.openid,e.id eid,p.`status` `status`,(\n\t\tcase " \
+              "\n\t\twhen p.`timestamp`is null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen " \
+              "p.`timestamp`\n\t\twhen (e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(" \
+              "p.`timestamp`,e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tleft outer join emotions e\n\ton " \
+              "p.id=e.pid\n    \n\tunion\n    \n\tselect p.id pid,p.openid,e.id eid,p.`status` `status`,(\n\t\tcase " \
+              "\n\t\twhen p.`timestamp`is null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen " \
+              "p.`timestamp`\n\t\twhen (e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(" \
+              "p.`timestamp`,e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tright outer join emotions e\n\ton " \
+              "p.id=e.pid\n) t\norder by gr_time desc "
         self.cursor.execute(sql)
         total = self.cursor.fetchone()[0]
 
-        sql = "select * \nfrom (\n\tselect coalesce(p.id,-1) pid,coalesce(p.openid,''),coalesce(-1,e.id) eid,coalesce(e.eid,'') euid,coalesce( p.`status`,'已发表') `status`,(\n\t\tcase \n\t\twhen p.`timestamp`is null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen p.`timestamp`\n\t\twhen (e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(p.`timestamp`,e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tleft outer join emotions e\n\ton p.id=e.pid\n    \n\tunion\n    \n\tselect coalesce(p.id,-1) pid,coalesce(p.openid,''),coalesce(-1,e.id) eid,coalesce(e.eid,'') euid,coalesce( p.`status`,'已发表') `status`,(\n\t\tcase \n\t\twhen p.`timestamp`is null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen p.`timestamp`\n\t\twhen (e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(p.`timestamp`,e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tright outer join emotions e\n\ton p.id=e.pid\n) t\norder by gr_time desc " + limit_statement
+        sql = "select * \nfrom (\n\tselect coalesce(p.id,-1) pid,coalesce(p.openid,''),coalesce(-1,e.id) eid," \
+              "coalesce(e.eid,'') euid,coalesce( p.`status`,'已发表') `status`,(\n\t\tcase \n\t\twhen p.`timestamp`is " \
+              "null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen p.`timestamp`\n\t\twhen (" \
+              "e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(p.`timestamp`," \
+              "e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tleft outer join emotions e\n\ton p.id=e.pid\n    " \
+              "\n\tunion\n    \n\tselect coalesce(p.id,-1) pid,coalesce(p.openid,''),coalesce(-1,e.id) eid," \
+              "coalesce(e.eid,'') euid,coalesce( p.`status`,'已发表') `status`,(\n\t\tcase \n\t\twhen p.`timestamp`is " \
+              "null\n\t\tthen e.`timestamp`\n\t\twhen e.`timestamp`is null\n\t\tthen p.`timestamp`\n\t\twhen (" \
+              "e.`timestamp` is not null) and (p.`timestamp`is not null)\n\t\tthen greatest(p.`timestamp`," \
+              "e.`timestamp`)\n\t\tend\n\t) gr_time from posts p\n\tright outer join emotions e\n\ton p.id=e.pid\n) " \
+              "t\norder by gr_time desc {}".format(limit_statement)
         self.cursor.execute(sql)
         contents = self.cursor.fetchall()
 
@@ -370,7 +436,7 @@ class MySQLConnection:
                                                   int(time.time()),
                                                   media)
 
-        temp_thread = threading.Thread(target=pkg.routines.feedback_routines.receive_feedback, args=(openid,content),
+        temp_thread = threading.Thread(target=pkg.routines.feedback_routines.receive_feedback, args=(openid, content),
                                        daemon=True)
         temp_thread.start()
 

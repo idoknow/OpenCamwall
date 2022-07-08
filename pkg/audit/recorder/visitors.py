@@ -1,9 +1,7 @@
 # 数据分析角色的观察者
 
-import requests
 import time
 import json
-import pymysql
 import pkg.database.database
 import pkg.qzone.model
 
