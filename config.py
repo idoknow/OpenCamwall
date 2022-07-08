@@ -1,6 +1,8 @@
 # 配置文件
 
 # QQ机器人账号
+import logging
+
 qq_bot_uin = 1480613886
 
 # mirai-http的verifykey
@@ -53,3 +55,6 @@ mini_program_appid = 'wx8f8f8f8f8f8f8f8f'
 
 # 小程序的secret
 mini_program_secret = '1234567890'
+
+# logging的日志级别
+logging_level = logging.INFO
