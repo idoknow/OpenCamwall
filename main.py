@@ -18,8 +18,7 @@ def qzone_cookie_invalidated_callback():
     chat_bot.send_message_to_admins(["[bot]qzone_token刷新失败,cookie可能已经失效,回复'更新cookie'进行重新登录"])
 
 
-if __name__ == '__main__':
-
+def main():
     # 建立数据库对象
     db_mgr = pkg.database.database.MySQLConnection(config.database_context['host'],
                                                    config.database_context['port'],
@@ -70,14 +69,22 @@ if __name__ == '__main__':
             cookie_str += "{}={};".format(k, cookies[k])
 
         qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
-                                                   cookie_str)
+                                                   cookie_str,
+                                                   cookie_invalidated_callback=qzone_cookie_invalidated_callback)
         print(cookie_str)
         chat_bot.send_message_to_admins(["[bot]已成功通过二维码登录QQ空间"])
     else:
         qzone_oper = pkg.qzone.model.QzoneOperator(config.qzone_uin,
-                                                   config.qzone_cookie)
+                                                   config.qzone_cookie,
+                                                   cookie_invalidated_callback=qzone_cookie_invalidated_callback)
         chat_bot.send_message_to_admins(["[bot]已成功使用提供的cookie登录QQ空间"])
 
     # qzone_oper.publish_emotion("已上线")
 
+
+
+if __name__ == '__main__':
+    main()
+    pkg.qzone.model.get_inst().publish_emotion("已上线")
+    pkg.qzone.model.get_inst().get_visitor_amount_data()
     time.sleep(100000)
