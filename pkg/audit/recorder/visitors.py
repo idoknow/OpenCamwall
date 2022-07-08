@@ -1,5 +1,5 @@
 # 数据分析角色的观察者
-
+import logging
 import time
 import json
 import pkg.database.database
@@ -9,7 +9,7 @@ last_record_total = 0
 mysql_conn = 0
 db_cursor = 0
 
-RECORD_VISITOR_PERIOD = 5
+RECORD_VISITOR_PERIOD = 10
 VISITOR_AMOUNT_ACCURACY = 10
 
 TYPE_VISITOR_INCREASE = "visitor_increase"
@@ -32,7 +32,7 @@ def record_visitor():
         obj = {
             'data': pkg.qzone.model.get_inst().get_visitor_amount_data(),
         }
-        print("正在检查访客数量...total:{} today:{}".format(obj["data"]["total"], obj["data"]["today"]))
+        logging.info("正在检查访客数量...total:{} today:{}".format(obj["data"]["total"], obj["data"]["today"]))
         if obj["data"]["total"] - last_record_total >= VISITOR_AMOUNT_ACCURACY or (
                 obj["data"]["today"] < last_today_amount != -1):
             result = {
@@ -46,12 +46,12 @@ def record_visitor():
 
                 sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
                     TYPE_VISITOR_INCREASE, int(time.time()), jsontext)
-                print((time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(time.time()))))+" 记录访客:" + sql)
+                logging.info("记录空间访客:" + str(obj['data']))
                 pkg.database.database.get_inst().cursor.execute(sql)
                 last_record_total = obj["data"]["total"]
         last_today_amount = obj["data"]["today"]
     except Exception as e:
-        print(e)
+        logging.exception(e)
 
 
 def initialize_visitor_recorder():

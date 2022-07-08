@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import pkg.qzone.model
@@ -237,7 +238,8 @@ class EmotionPublisher:
             try:
                 self.refresh_access_token()
             except Exception as e:
-                print("获取小程序储存access_token失败:", e)
+                logging.error("获取小程序储存access_token失败")
+                logging.exception(e)
 
     def refresh_access_token(self, attempts=5):
         for i in range(5):
@@ -314,7 +316,6 @@ class EmotionPublisher:
 
             return path + "/out." + filetype
         except Exception as e:
-            print(e)
             raise e
 
 

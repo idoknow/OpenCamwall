@@ -15,7 +15,7 @@
 ## 开发待办
 
 - [ ] 更加完善的Qzone Cookie保障逻辑
-- [ ] 更加整洁的日志记录
+- [x] 更加整洁的日志记录
 
 ## 依赖
 
@@ -26,6 +26,7 @@
 * Pillow
 * pymysql
 * yiri-mirai
+* colorlog
 
 ### 框架
 

@@ -1,3 +1,4 @@
+import logging
 from email.quoprimime import quote
 import re
 from pathlib import Path
@@ -84,7 +85,7 @@ class ChatBot:
             raise Exception('target_type error')
 
     async def on_message(self, event: MessageEvent):
-        print(event.sender.id, event.message_chain, sep=":")
+        logging.info("[QQ消息:{}".format(event.sender.id)+"]:"+str(event.message_chain))
         if event.sender.id == self.uin:
             return
         elif '更新cookie' in str(event.message_chain):

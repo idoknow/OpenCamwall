@@ -1,5 +1,5 @@
 # 单条说说点赞量分析
-
+import logging
 from cmath import e
 import re
 import threading
@@ -37,14 +37,14 @@ class Emotion:
         for tp in record_time:
             if tp >= now - self.timestamp:
                 now = int(time.time())
-                print("schedule:{} next_point:{}".format(tp - (now - self.timestamp), tp))
+                # print("schedule:{} next_point:{}".format(tp - (now - self.timestamp), tp))
                 time.sleep(tp - (now - self.timestamp))
                 if not self.is_valid():  # 已经不可用了，退出
                     break
                 go(self.record, args=(tp,))
 
     def record(self, interval):
-        print("record:eid:{} pid:{}".format(self.eid, self.pid))
+        # print("record:eid:{} pid:{}".format(self.eid, self.pid))
         nowmill = int(time.time()) * 1000
         url = EMOTION_INFO_API.format(nowmill,pkg.qzone.model.get_inst().uin, self.eid)
         # print(url)
@@ -88,13 +88,13 @@ class Emotion:
 
                     sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
                         pkg.audit.recorder.visitors.TYPE_LIKER_RECORD, int(time.time()), jsontext)
-                    print("时间点{}记录:".format(interval) + sql)
+                    logging.info("说说(pid:{}) 时间点{}记录".format(self.pid,interval))
                     pkg.database.database.get_inst().cursor.execute(sql)
 
                 except Exception as e1:
-                    print(e1)
+                    logging.exception(e1)
             else:
-                print("set invalid:{}".format(self.eid))
+                # print("set invalid:{}".format(self.eid))
                 # invalid
                 self.valid = 0
                 # 修改数据库记录
@@ -134,7 +134,7 @@ def fetch_new_emotions():
                     continue
 
                 # 从content提取pid
-                print("获取到新emo:{}".format(emo["content"]))
+                logging.info("检测到新说说:{}".format(emo["content"]))
                 pid = -1
                 postid = re.findall(r'## [\d]*', emo["content"])
                 if len(postid) != 0:
@@ -158,7 +158,7 @@ def fetch_new_emotions():
 
                     go(emotion_obj.schedule)
                 except Exception as e:
-                    print(e)
+                    logging.exception(e)
 
 
 def index_by_emotion_id(eid):
@@ -174,7 +174,7 @@ def index_by_emotion_id(eid):
 
 def load_tracking_emotions():  # 从数据库加载所有仍在跟踪的说说到运行时变量
     global tracking
-    print("loading emos from mysql")
+    logging.info("正在从数据库加载仍在跟踪期的说说...")
     now = int(time.time())
     max_time_ago = now - record_time[-1]
 
@@ -185,7 +185,7 @@ def load_tracking_emotions():  # 从数据库加载所有仍在跟踪的说说�
 
     for row in rows:
         emotion_obj = Emotion(row[0], row[1], row[2], row[3], row[4])
-        print("数据库加载正在跟踪emo:{}".format(emotion_obj.eid))
+        logging.info("正在跟踪说说:{}".format(emotion_obj.eid))
         tracking.append(emotion_obj)
         go(emotion_obj.schedule)
 

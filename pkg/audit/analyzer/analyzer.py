@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 import json
 import time
@@ -70,25 +71,25 @@ def analyze_history_heat_rate_and_heat():
     try:
         make_db_conn_sure()
         # 存数据库
-        print("分析日访客量完成")
+        logging.info("分析日访客量完成")
 
         sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_rate';".format(
             int(time.time()), json.dumps(data))
         pkg.database.database.get_inst().cursor.execute(sql)
 
-        print("分析总访客量曲线完成")
+        logging.info("分析总访客量曲线完成")
 
         sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat';".format(
             int(time.time()), json.dumps(data_heat))
         pkg.database.database.get_inst().cursor.execute(sql)
 
-        print("分析总访客量每小时完成")
+        logging.info("分析总访客量每小时完成")
 
         sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_per_hour';".format(
             int(time.time()), json.dumps(data_heat_per_hour))
         pkg.database.database.get_inst().cursor.execute(sql)
     except Exception as e:
-        print(e)
+        logging.exception(e)
 
 
 # 分析历史说说发表
@@ -112,7 +113,7 @@ def analyze_history_emo_posted():
             data.append([int(result[1] * 1000), result[0]])
 
         # 存数据库
-        print("分析说说发表完成")
+        logging.info("分析说说发表完成")
 
         make_db_conn_sure()
 
@@ -120,7 +121,7 @@ def analyze_history_emo_posted():
             int(time.time()), json.dumps(data))
         pkg.database.database.get_inst().cursor.execute(sql)
     except Exception as e:
-        print(e)
+        logging.exception(e)
 
 
 # 分析访客数量
@@ -171,7 +172,7 @@ def analyze_visitor_heat():
             day_index += 1
 
         # 存数据库
-        print("分析周时段热力完成")
+        logging.info("分析周时段热力完成")
 
         make_db_conn_sure()
 
@@ -209,12 +210,12 @@ def analyze_all():
 def analyzer_loop():
     while True:
         try:
-            print("启动分析...")
+            logging.info("启动分析...")
             analyze_all()
-            print("完成时间:", time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime()))
+            logging.info("完成时间:"+str(time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())))
         except Exception as e:
-            print("无法完成分析", time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime()), e)
-            raise e
+            logging.error("无法完成分析"+str(time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())))
+            logging.exception(e)
         time.sleep(60 * ANALYZE_ALL_PERIOD)
 
 

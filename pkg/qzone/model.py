@@ -1,5 +1,6 @@
 import base64
 import json
+import logging
 import threading
 import time
 from datetime import datetime
@@ -70,7 +71,7 @@ class QzoneOperator:
     def __init__(self, uin, cookie, keepalive=True, cookie_invalidated_callback=None):
         self.cookie_invalidated_callback = cookie_invalidated_callback
         self.__reset(uin, cookie, keepalive)
-        print("QzoneOperator初始化完成:uin={}".format(uin))
+        logging.info("QzoneOperator初始化完成:uin={}".format(uin))
 
     def __reset(self, uin, cookie, keepalive):
         global inst

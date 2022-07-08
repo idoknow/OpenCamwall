@@ -1,7 +1,10 @@
+import sys
 import threading
 import time
+import logging
 
 import config
+import colorlog
 
 import pkg.chat.manager
 import pkg.database.database
@@ -76,12 +79,14 @@ def main():
                                                    cookie_str,
                                                    cookie_invalidated_callback=qzone_cookie_invalidated_callback)
         print(cookie_str)
-        chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
+        # chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
+        logging.info("已通过二维码登录QQ空间")
     else:
         qzone_oper = pkg.qzone.model.QzoneOperator(config.qzone_uin,
                                                    config.qzone_cookie,
                                                    cookie_invalidated_callback=qzone_cookie_invalidated_callback)
-        chat_bot.send_message_to_admins(["[bot]已使用提供的cookie登录QQ空间"])
+        # chat_bot.send_message_to_admins(["[bot]已使用提供的cookie登录QQ空间"])
+        logging.info("已使用提供的cookie登录QQ空间")
 
     # qzone_oper.publish_emotion("已上线")
 
@@ -91,7 +96,8 @@ def main():
 
     time.sleep(3)
 
-    liker_recorder_thread=threading.Thread(target=pkg.audit.recorder.likers.initialize_liker_recorder, args=(), daemon=True)
+    liker_recorder_thread = threading.Thread(target=pkg.audit.recorder.likers.initialize_liker_recorder, args=(),
+                                             daemon=True)
     liker_recorder_thread.start()
 
     time.sleep(3)
@@ -100,8 +106,67 @@ def main():
     analyzer_thread.start()
 
 
+log_colors_config = {
+    'DEBUG': 'green',  # cyan white
+    'INFO': 'white',
+    'WARNING': 'yellow',
+    'ERROR': 'red',
+    'CRITICAL': 'bold_red',
+}
+
 if __name__ == '__main__':
+    logging.basicConfig(level=config.logging_level,  # 设置日志输出格式
+                        filename='camwall.log',  # log日志输出的文件位置和文件名
+                        format="[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : %(message)s",
+                        # 日志输出的格式
+                        # -8表示占位符，让输出左对齐，输出长度都为8位
+                        datefmt="%Y-%m-%d %H:%M:%S"  # 时间输出的格式
+                        )
+    sh = logging.StreamHandler()
+    sh.setLevel(config.logging_level)
+    sh.setFormatter(colorlog.ColoredFormatter(
+        fmt="%(log_color)s[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : "
+            "%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors=log_colors_config
+    )
+    )
+    logging.getLogger().addHandler(sh)
+
+    # logger = logging.getLogger('cw')
+    #
+    # fh = logging.FileHandler(filename='camwall.log', mode='a', encoding='utf8')
+    #
+    # fh_formatter = file_formatter = logging.Formatter(
+    #     fmt="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s (%(lineno)s) - %(message)s",
+    #     datefmt="%Y-%m-%d %H:%M:%S"
+    # )
+    # fh.setFormatter(fh_formatter)
+    # fh.setLevel(config.logging_level)
+    #
+    # sh = logging.StreamHandler()
+    #
+    # sh_formatter = colorlog.ColoredFormatter(
+    #     fmt="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s (%(lineno)s) - %(message)s",
+    #     datefmt="%Y-%m-%d %H:%M:%S",
+    #     log_colors={
+    #         'DEBUG': 'white',  # cyan white
+    #         'INFO': 'red',
+    #         'WARNING': 'yellow',
+    #         'ERROR': 'red',
+    #         'CRITICAL': 'bold_red',
+    #     }
+    # )
+    # sh.setFormatter(sh_formatter)
+    # sh.setLevel(config.logging_level)
+    #
+    # logger.addHandler(fh)
+    # logger.addHandler(sh)
+    # logger.setLevel(config.logging_level)
+    #
+    # logger.info("正在执行启动流程...")
+
     main()
-    # print(pkg.qzone.model.get_inst().get_visitor_amount_data())
+
     while True:
         time.sleep(86400)
