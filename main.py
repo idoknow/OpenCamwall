@@ -103,4 +103,5 @@ def main():
 if __name__ == '__main__':
     main()
     # print(pkg.qzone.model.get_inst().get_visitor_amount_data())
-    time.sleep(100000)
+    while True:
+        time.sleep(86400)
