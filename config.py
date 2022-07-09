@@ -1,9 +1,8 @@
 # 配置文件
-
-# QQ机器人账号
 import logging
 
-qq_bot_uin = 1480613886
+# QQ机器人账号
+qq_bot_uin = 0
 
 # mirai-http的verifykey
 mirai_http_verify_key = 'yirimirai'
@@ -15,24 +14,24 @@ qzone_uin = 0
 qzone_cookie = ''
 
 # 自动回复消息
-auto_reply_message = '[bot]自动化接稿系统接管，请扫码进入小程序投稿(QQ可扫)，信息反馈请到群733524559:\n\n'
+auto_reply_message = '[bot]bot收到私发QQ消息时回复的文字\n\n'
 
 # 小程序码路径
 qrcode_path = './qrcode.jpg'
 
 # 管理员QQ，用于接收系统内部通知
-admin_uins = [1010553892]
+admin_uins = [1111111111]
 
 # 管理群，用于审核说说
-admin_groups = [1025599757]
+admin_groups = [1234567890]
 
 # MySQL数据库
 database_context = {
     'host': 'localhost',
     'port': 3306,
-    'user': 'root',
-    'password': '000112',
-    'db': 'camwall_test'
+    'user': 'camwall',
+    'password': '123456',
+    'db': 'camwall'
 }
 
 # RESTful API 监听端口
