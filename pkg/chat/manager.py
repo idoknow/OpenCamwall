@@ -35,7 +35,8 @@ def update_cookie_workflow():
     qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
                                                cookie_str)
 
-    chat_bot.send_message_to_admins(["[bot]已成功登录QQ空间"])
+    chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
+    logging.info("已通过二维码登录QQ空间")
 
     # 把cookie写进config.py
     config_file = open('config.py', encoding='utf-8', mode='r+')
