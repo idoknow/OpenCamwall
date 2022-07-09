@@ -27,8 +27,8 @@ def clean_pending_posts(interval_seconds=10):
             pkg.qzone.publisher.get_inst().prepare_post(post)
             # 发表完成
             finish_ts = time.time()
-            pkg.chat.manager.get_inst().send_message_to_admins(
-                "[bot]已完成发表:##{} 耗时:{:.2f}s".format(post['id'], finish_ts - start_ts))
+            # pkg.chat.manager.get_inst().send_message_to_admins(
+            #     "[bot]已完成发表:##{} 耗时:{:.2f}s".format(post['id'], finish_ts - start_ts))
             logging.info("已完成发表:##{} 耗时:{:.2f}s".format(post['id'], finish_ts - start_ts))
             pkg.database.database.get_inst().update_post_status(post_id=post['id'], new_status='已发表')
         except Exception as e:
