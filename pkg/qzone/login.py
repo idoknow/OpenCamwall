@@ -5,7 +5,8 @@ import time
 
 import requests
 
-inst=None
+inst = None
+
 
 def callback(path):
     os.system("explorer {}".format(path))
@@ -20,7 +21,7 @@ class QzoneLoginManager:
 
     def __init__(self):
         global inst
-        inst=self
+        inst = self
         pass
 
     def getptqrtoken(self, qrsig):

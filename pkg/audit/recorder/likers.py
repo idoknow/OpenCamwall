@@ -1,6 +1,5 @@
 # 单条说说点赞量分析
 import logging
-from cmath import e
 import re
 import threading
 import requests

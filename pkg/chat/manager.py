@@ -1,6 +1,5 @@
 import logging
 import threading
-from email.quoprimime import quote
 import re
 from pathlib import Path
 import pkg.qzone.model
