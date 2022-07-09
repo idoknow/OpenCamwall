@@ -1,4 +1,5 @@
 import logging
+import threading
 from email.quoprimime import quote
 import re
 from pathlib import Path
@@ -16,6 +17,34 @@ sys.path.append("../")
 from pkg.database.database import MySQLConnection
 
 inst = None
+
+
+def update_cookie_workflow():
+    chat_bot = pkg.chat.manager.get_inst()
+
+    # 向管理员发送QQ空间登录二维码
+    qzone_login = pkg.qzone.login.QzoneLoginManager()
+    cookies = qzone_login.login_via_qrcode(
+        qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
+
+    cookie_str = ""
+
+    for k in cookies:
+        cookie_str += "{}={};".format(k, cookies[k])
+
+    qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
+                                               cookie_str)
+
+    chat_bot.send_message_to_admins(["[bot]已成功登录QQ空间"])
+
+    # 把cookie写进config.py
+    config_file = open('config.py', encoding='utf-8', mode='r+')
+    config_str = config_file.read()
+    config_str = re.sub(r'qzone_cookie = .*', 'qzone_cookie = \'{}\''.format(cookie_str), config_str)
+
+    config_file.seek(0)
+    config_file.write(config_str)
+    config_file.close()
 
 
 class ChatBot:
@@ -85,26 +114,12 @@ class ChatBot:
             raise Exception('target_type error')
 
     async def on_message(self, event: MessageEvent):
-        logging.info("[QQ消息:{}".format(event.sender.id)+"]:"+str(event.message_chain))
+        logging.info("[QQ消息:{}".format(event.sender.id) + "]:" + str(event.message_chain))
         if event.sender.id == self.uin:
             return
         elif '更新cookie' in str(event.message_chain):
-            chat_bot=pkg.chat.manager.get_inst()
-
-            # 向管理员发送QQ空间登录二维码
-            qzone_login = pkg.qzone.login.QzoneLoginManager()
-            cookies = qzone_login.login_via_qrcode(
-                qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
-
-            cookie_str = ""
-
-            for k in cookies:
-                cookie_str += "{}={};".format(k, cookies[k])
-
-            qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
-                                                       cookie_str)
-
-            chat_bot.send_message_to_admins(["[bot]已成功登录QQ空间"])
+            update_thread = threading.Thread(target=update_cookie_workflow, daemon=True)
+            update_thread.start()
         else:
             openid = re.findall(r'#id{[-_\d\w]{28}}', str(event.message_chain))
             if len(openid) > 0:
