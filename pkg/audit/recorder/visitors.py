@@ -9,7 +9,7 @@ last_record_total = 0
 mysql_conn = 0
 db_cursor = 0
 
-RECORD_VISITOR_PERIOD = 10
+RECORD_VISITOR_PERIOD = 15
 VISITOR_AMOUNT_ACCURACY = 10
 
 TYPE_VISITOR_INCREASE = "visitor_increase"

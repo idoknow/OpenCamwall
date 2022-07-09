@@ -45,7 +45,7 @@ class Emotion:
     def record(self, interval):
         # print("record:eid:{} pid:{}".format(self.eid, self.pid))
         nowmill = int(time.time()) * 1000
-        url = EMOTION_INFO_API.format(nowmill,pkg.qzone.model.get_inst().uin, self.eid)
+        url = EMOTION_INFO_API.format(nowmill, pkg.qzone.model.get_inst().uin, self.eid)
         # print(url)
         resp = requests.get(url)
 
@@ -87,7 +87,7 @@ class Emotion:
 
                     sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
                         pkg.audit.recorder.visitors.TYPE_LIKER_RECORD, int(time.time()), jsontext)
-                    logging.info("说说(pid:{}) 时间点{}记录".format(self.pid,interval))
+                    logging.info("说说(pid:{}) 时间点{}记录".format(self.pid, interval))
                     pkg.database.database.get_inst().cursor.execute(sql)
 
                 except Exception as e1:
@@ -104,8 +104,8 @@ class Emotion:
             raise Exception("err msg:" + respobj["message"])
 
 
-record_time = [60, 180, 300, 600, 1200, 1800, 3600, 7200, 360 * 60, 720 * 60,
-               1440 * 60]  # 1m,3m,5m,10m,20m,30m,60m,120m(2h),360m(6h),720m(12h),1440m(24h)
+record_time = [600, 1200, 1800, 3600, 7200, 360 * 60, 720 * 60,
+               1440 * 60]  # 10m,20m,30m,60m,120m(2h),360m(6h),720m(12h),1440m(24h)
 
 tracking = []
 
@@ -113,7 +113,8 @@ tracking = []
 def fetch_new_emotions_loop():
     while True:
         go(fetch_new_emotions)
-        time.sleep(30)
+        time.sleep(300)
+
 
 def fetch_new_emotions():
     global tracking
@@ -147,7 +148,8 @@ def fetch_new_emotions():
 
                     pkg.database.database.get_inst().cursor.execute(sql)
 
-                    pkg.database.database.get_inst().cursor.execute("select id from `emotions` where `eid`='{}'".format(emo["tid"]))
+                    pkg.database.database.get_inst().cursor.execute(
+                        "select id from `emotions` where `eid`='{}'".format(emo["tid"]))
                     id = int(pkg.database.database.get_inst().cursor.fetchone()[0])
 
                     # 存运行时变量
