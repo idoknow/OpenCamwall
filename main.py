@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import threading
 import time
@@ -74,6 +75,8 @@ def main():
                                                        cookie_invalidated_callback=qzone_cookie_invalidated_callback)
             # chat_bot.send_message_to_admins(["[bot]已使用提供的cookie登录QQ空间"])
             logging.info("已使用提供的cookie登录QQ空间")
+        else:
+            raise Exception("没有提供cookie")
     except Exception as e:
         logging.info("使用提供的cookie登录QQ空间失败,尝试使用二维码登录")
         cookies = qzone_login.login_via_qrcode(
@@ -90,6 +93,15 @@ def main():
         print(cookie_str)
         chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
         logging.info("已通过二维码登录QQ空间")
+
+        # 把cookie写进config.py
+        config_file = open('config.py',encoding='utf-8',mode='r+')
+        config_str = config_file.read()
+        config_str = re.sub(r'qzone_cookie = .*', 'qzone_cookie = \'{}\''.format(cookie_str), config_str)
+
+        config_file.seek(0)
+        config_file.write(config_str)
+        config_file.close()
 
     time.sleep(3)
     # 启动分析程序
