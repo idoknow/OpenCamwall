@@ -1,3 +1,4 @@
+import hashlib
 import json
 import logging
 import os
@@ -15,6 +16,7 @@ from PIL import Image, ImageFont, ImageDraw
 inst = None
 
 text_render_font = ImageFont.truetype("simhei.ttf", 32, encoding="utf-8")
+label_render_font = ImageFont.truetype("simhei.ttf", 20, encoding="utf-8")
 anonymous_nick_font = ImageFont.truetype("simhei.ttf", 45, encoding="utf-8")
 comment_text = ImageFont.truetype("msyh.ttc", 14, encoding="utf-8")
 
@@ -105,8 +107,43 @@ def compress_image(infile, outfile='', mb=512, step=20, quality=90):
     return outfile, get_size(outfile)
 
 
+def text_color(text):
+    md5 = string_to_md5(text)
+
+    rsample = int(md5[:2], 16)  # [0,255]
+    gsample = int(md5[12:14], 16)
+    bsample = int(md5[-3:-1], 16)
+
+    rn = rsample * rsample  # [0,65025]
+    gn = gsample * gsample
+    bn = bsample * bsample
+
+    rlimit = int(rn * 0.0039315686)  # [0,255]
+    glimit = int(gn * 0.0039315686)
+    blimit = int(bn * 0.0039315686)
+
+    r = hex(int(rlimit * 0.7 + 30))[2:].rjust(2, "0")
+    g = hex(int(glimit * 0.61 + 58))[2:].rjust(2, "0")
+    b = hex(int(blimit * 0.54 + 60))[2:].rjust(2, "0")
+
+    return "#" + r + g + b
+
+
+def string_to_md5(string):
+    md5_val = hashlib.md5(string.encode('utf8')).hexdigest()
+    return md5_val
+
+
+def find_labels(text):
+    return re.findall(r'#\[.+?\]#', text)
+
+
 def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_bottom_text=None):
     global text_render_font
+
+    labels = find_labels(post['text'])
+    for label in labels:
+        post['text'] = post['text'].replace(label, '')
 
     # 分行
     lines = post['text'].split('\n')
@@ -184,6 +221,16 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
         nick_name = get_qq_nickname(post['qq'])
 
     draw.text((170, 55), nick_name, fill=nick_color, font=anonymous_nick_font)
+
+    # 绘制标签
+
+
+    x = 0
+    for l in labels:
+        ltext = l.replace("[", "").replace("]", "")
+        draw.rounded_rectangle((168 + x, 102, 168 + x + len(ltext) * 17, 124), radius=5, fill=text_color(ltext))
+        draw.text((170 + x, 102), ltext, fill="#FFFFFF", font=label_render_font)
+        x += len(ltext * 18)
 
     # 绘制正文
 

@@ -28,7 +28,7 @@ class MySQLConnection:
     connection = None
     cursor = None
 
-    def __init__(self, host, port, user, password, database):
+    def __init__(self, host, port, user, password, database, autocommit=True):
         global inst
         self.host = host
         self.port = port
@@ -40,13 +40,13 @@ class MySQLConnection:
 
         self.connect()
 
-    def connect(self):
+    def connect(self, autocommit=True):
         self.connection = pymysql.connect(host=self.host,
                                           port=self.port,
                                           user=self.user,
                                           password=self.password,
                                           db=self.database,
-                                          autocommit=True,
+                                          autocommit=autocommit,
                                           charset='utf8mb4', )
         self.cursor = self.connection.cursor()
 
@@ -170,10 +170,10 @@ class MySQLConnection:
             if result[0] != old_status:
                 raise Exception("此稿件状态不是:{}".format(old_status))
         self.ensure_connection()
-        sql = "update `posts` set `status`='{}' where `id`={}".format(new_status, post_id)
+        sql = "update `posts` set `status`='{}' where `id`={}".format(raw_to_escape(new_status), post_id)
         self.cursor.execute(sql)
         if review != '':
-            sql = "update `posts` set `review`='{}' where `id`={}".format(review, post_id)
+            sql = "update `posts` set `review`='{}' where `id`={}".format(raw_to_escape(review), post_id)
             self.cursor.execute(sql)
 
         temp_thread = threading.Thread(target=pkg.routines.post_routines.post_status_changed,
