@@ -1,5 +1,9 @@
 # OpenCamwall
 
+
+[![OSCS Status](https://www.oscs1024.com/platform/badge/RockChinQ/OpenCamwall.svg?size=small)](https://www.oscs1024.com/project/RockChinQ/OpenCamwall?ref=badge_small)
+[![Licence](https://img.shields.io/github/license/RockChinQ/OpenCamwall)](https://github.com/RockChinQ/OpenCamwall/blob/master/LICENSE)
+
 继承自个人闭源项目camwall-backend  
 实现从接收投稿、稿件审核到发表说说的自动化
 
