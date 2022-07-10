@@ -3,6 +3,7 @@ import threading
 import time
 
 import pymysql as pymysql
+from pymysql.converters import escape_string
 import requests
 
 import pkg.routines.post_routines
@@ -69,14 +70,14 @@ class MySQLConnection:
         try:
             self.mutex.acquire()
             self.ensure_connection()
-            sql = "select * from `accounts` where `qq`='{}'".format(uin)
+            sql = "select * from `accounts` where `qq`='{}'".format(escape_string(uin))
             self.cursor.execute(sql)
             results = self.cursor.fetchall()
             for _ in results:
                 # 只要有
                 raise Exception("该QQ号已经绑定了微信号,请先发送 #unbinding 以解绑")
 
-            sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(uin, openid,
+            sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(escape_string(uin), escape_string(openid),
                                                                                                     int(time.time()))
             self.cursor.execute(sql)
         finally:
@@ -87,7 +88,7 @@ class MySQLConnection:
         try:
             self.mutex.acquire()
             self.ensure_connection()
-            sql = "delete from `accounts` where `qq`='{}'".format(uin)
+            sql = "delete from `accounts` where `qq`='{}'".format(escape_string(uin))
             self.cursor.execute(sql)
         finally:
             self.mutex.release()
@@ -98,11 +99,11 @@ class MySQLConnection:
             self.mutex.acquire()
 
             sql = "insert into `posts` (`openid`,`qq`,`timestamp`,`text`,`media`,`anonymous`) values ('{}','{}',{},'{}'," \
-                  "'{}',{})".format(openid, qq, int(time.time()), raw_to_escape(text), media, 1 if anonymous else 0)
+                  "'{}',{})".format(escape_string(openid), escape_string(str(qq)), int(time.time()), escape_string(text), escape_string(media), 1 if anonymous else 0)
             self.cursor.execute(sql)
             # self.connection.commit()
 
-            sql = "select `id` from `posts` where `openid`='{}' order by `id` desc limit 1".format(openid)
+            sql = "select `id` from `posts` where `openid`='{}' order by `id` desc limit 1".format(escape_string(openid))
             self.cursor.execute(sql)
             result = self.cursor.fetchone()
         finally:
@@ -200,10 +201,10 @@ class MySQLConnection:
             self.mutex.acquire()
 
             self.ensure_connection()
-            sql = "update `posts` set `status`='{}' where `id`={}".format(raw_to_escape(new_status), post_id)
+            sql = "update `posts` set `status`='{}' where `id`={}".format(escape_string(new_status), post_id)
             self.cursor.execute(sql)
             if review != '':
-                sql = "update `posts` set `review`='{}' where `id`={}".format(raw_to_escape(review), post_id)
+                sql = "update `posts` set `review`='{}' where `id`={}".format(escape_string(review), post_id)
                 self.cursor.execute(sql)
         finally:
             self.mutex.release()
@@ -258,7 +259,7 @@ class MySQLConnection:
         try:
             self.mutex.acquire()
 
-            sql = "select * from `banlist` where `openid`='{}' order by id desc".format(openid)
+            sql = "select * from `banlist` where `openid`='{}' order by id desc".format(escape_string(openid))
             self.cursor.execute(sql)
             ban = self.cursor.fetchone()
             if ban is not None:
@@ -272,7 +273,7 @@ class MySQLConnection:
                     result['reason'] = reason
                     return result
 
-            sql = "select * from `accounts` where `openid`='{}'".format(openid)
+            sql = "select * from `accounts` where `openid`='{}'".format(escape_string(openid))
             self.cursor.execute(sql)
             accounts = self.cursor.fetchall()
         finally:
@@ -296,7 +297,7 @@ class MySQLConnection:
             self.mutex.acquire()
 
             self.ensure_connection()
-            sql = "select * from `constants` where `key`='{}'".format(key)
+            sql = "select * from `constants` where `key`='{}'".format(escape_string(key))
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
         finally:
@@ -406,7 +407,7 @@ class MySQLConnection:
             self.mutex.acquire()
 
             self.ensure_connection()
-            sql = "select * from `static_data` where `key`='{}'".format(key)
+            sql = "select * from `static_data` where `key`='{}'".format(escape_string(key))
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
         finally:
@@ -503,10 +504,10 @@ class MySQLConnection:
 
             self.ensure_connection()
             sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`)" \
-                  " values('{}','{}',{},'{}')".format(openid,
-                                                      content,
+                  " values('{}','{}',{},'{}')".format(escape_string(openid),
+                                                      escape_string(content),
                                                       int(time.time()),
-                                                      media)
+                                                      escape_string(media))
 
             temp_thread = threading.Thread(target=pkg.routines.feedback_routines.receive_feedback,
                                            args=(openid, content),
