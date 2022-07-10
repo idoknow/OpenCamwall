@@ -1,7 +1,7 @@
 # OpenCamwall
 
 
-[![OSCS Status](https://www.oscs1024.com/platform/badge/RockChinQ/OpenCamwall.svg?size=small)](https://www.oscs1024.com/project/RockChinQ/OpenCamwall?ref=badge_small)
+[![OSCS Status](https://www.oscs1024.com/platform/badge//RockChinQ/OpenCamwall.git.svg?size=small)](https://www.murphysec.com/dr/SB70LFWPato6GXzInU)  
 [![Licence](https://img.shields.io/github/license/RockChinQ/OpenCamwall)](https://github.com/RockChinQ/OpenCamwall/blob/master/LICENSE)
 
 继承自个人闭源项目camwall-backend  
