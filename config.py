@@ -67,3 +67,9 @@ mini_program_secret = '1234567890'
 
 # logging的日志级别
 logging_level = logging.INFO
+
+# 发表完成之后提示原作者的赞助语,若为空则不提示
+sponsor_message = ''
+
+# 赞助收款码
+sponsor_qrcode_path = ['res/wechat_qrcode.jpg', 'res/alipay_qrcode.jpg']
