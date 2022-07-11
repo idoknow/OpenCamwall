@@ -70,14 +70,14 @@ class MySQLConnection:
         try:
             self.mutex.acquire()
             self.ensure_connection()
-            sql = "select * from `accounts` where `qq`='{}'".format(escape_string(uin))
+            sql = "select * from `accounts` where `qq`='{}'".format(escape_string(str(uin)))
             self.cursor.execute(sql)
             results = self.cursor.fetchall()
             for _ in results:
                 # 只要有
                 raise Exception("该QQ号已经绑定了微信号,请先发送 #unbinding 以解绑")
 
-            sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(escape_string(uin), escape_string(openid),
+            sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(escape_string(str(uin)), escape_string(openid),
                                                                                                     int(time.time()))
             self.cursor.execute(sql)
         finally:
@@ -88,7 +88,7 @@ class MySQLConnection:
         try:
             self.mutex.acquire()
             self.ensure_connection()
-            sql = "delete from `accounts` where `qq`='{}'".format(escape_string(uin))
+            sql = "delete from `accounts` where `qq`='{}'".format(escape_string(str(uin)))
             self.cursor.execute(sql)
         finally:
             self.mutex.release()
