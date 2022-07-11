@@ -1,9 +1,15 @@
 import json
+import logging
+import time
+from pathlib import Path
+from mirai import Image
 
+import config
 import pkg.chat.manager
 import pkg.database.database
 
 import pkg.routines.qzone_routines
+import pkg.qzone.model
 
 
 def new_post_incoming(post_data):
@@ -36,3 +42,25 @@ def post_status_changed(post_id, new_status):
                                        str(len(json.loads(post['media']))), post['review']))
     elif new_status == '通过':
         pkg.routines.qzone_routines.clean_pending_posts()
+
+
+def post_finished(post_id, qq, tid):
+    # 验证是否发表成功
+    tid_valid = False
+    for i in range(4):
+        tid_valid = pkg.qzone.model.get_inst().tid_valid(tid)
+        if tid_valid:
+            break
+        time.sleep(3)
+
+    if tid_valid:
+        # 发送赞助信息给用户
+        if config.sponsor_message != '':
+            # 包装消息链
+            message_chain=[config.sponsor_message]
+
+            for sponsor_qrcode in config.sponsor_qrcode_path:
+                if Path(sponsor_qrcode).exists():
+                    message_chain.append(Image(path=sponsor_qrcode))
+            pkg.chat.manager.get_inst().send_message("person", qq, message_chain)
+            logging.info("发送赞助信息给用户:{}".format(qq))

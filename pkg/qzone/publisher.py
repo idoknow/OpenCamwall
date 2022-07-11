@@ -330,7 +330,7 @@ class EmotionPublisher:
         for media in json.loads(post['media']):
             image_files.append(self.downloadCloudImage(media, 'cache/{}'.format(int(time.time()))))
 
-        pkg.qzone.model.get_inst().publish_emotion(text, image_files)
+        return pkg.qzone.model.get_inst().publish_emotion(text, image_files)
 
     def downloadCloudImage(self, cloud, path):
         try:

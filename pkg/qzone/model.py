@@ -11,6 +11,9 @@ import requests
 import pkg.chat.manager
 import pkg.routines.qzone_routines
 
+EMOTION_INFO_API = "https://user.qzone.qq.com/proxy/domain/r.qzone.qq.com/cgi-bin/user/qz_opcnt2?_stp={" \
+                   "}&unikey=http://user.qzone.qq.com/{}/mood/{}&face=0&fupdate=1 "
+
 
 def image_base64(image_path):
     pic = open(image_path, "rb")
@@ -309,11 +312,12 @@ class QzoneOperator:
             'total': visit_count['totalcount'],
         }
 
-    def get_emotion_list(self,num=10):
+    def get_emotion_list(self, num=10):
         res = requests.get(
             url="https://user.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msglist_v6?"
                 "uin={}&ftype=0&sort=0&pos=0&num={}&replynum=100&g_tk={}&callback=_preloadCallback"
-                "&code_version=1&format=jsonp&need_private_comment=1&g_tk={}".format(self.uin,num, self.gtk2, self.gtk2),
+                "&code_version=1&format=jsonp&need_private_comment=1&g_tk={}".format(self.uin, num, self.gtk2,
+                                                                                     self.gtk2),
             cookies=self.cookie_dict)
         json_text = res.text.replace("_preloadCallback(", '')[:-2]
         json_obj = json.loads(json_text)
@@ -330,6 +334,20 @@ class QzoneOperator:
             })
 
         return result
+
+    def tid_valid(self, tid):
+        """检查tid是否有效
+        :param tid: 说说id
+        :return: True/False
+        """
+        url = EMOTION_INFO_API.format(int(time.time()), self.uin, tid)
+        # print(url)
+        res = requests.get(url=url)
+        # print(res.text)
+        json_obj = json.loads(res.text.replace("_Callback(", "")[:-3])
+        # print(json_obj)
+
+        return json_obj['data'][0]['current']['newdata'].__contains__('LIKE')
 
 
 inst = None
