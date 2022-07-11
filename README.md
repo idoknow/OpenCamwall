@@ -25,6 +25,13 @@
 - [ ] 接口日志
 - [x] 解决多个查询同时进行时的冲突情况
 
+## 效果预览
+
+![稿件文字渲染](docs/res/render.jpg '稿件文字渲染')
+![稿件文字渲染(匿名)](docs/res/render_anonymous.jpg '稿件文字渲染(匿名)')
+![发表说说](docs/res/emotion.jpg '发表说说')
+![发表说说(带图)](docs/res/emotion_image.jpg '发表说说(带图)')
+
 ## 依赖
 
 ### 库
