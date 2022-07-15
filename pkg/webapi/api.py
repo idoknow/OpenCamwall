@@ -142,6 +142,30 @@ class RESTfulAPI:
             except Exception as e:
                 return "失败:{}".format(str(e))
 
+        @app.route('/fetchuniauthinfo', methods=['GET'])
+        def fetch_uniauth_by_openid():
+            try:
+                result = self.db_mgr.fetch_uniauth_by_openid(request.args['openid'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
+        @app.route('/changepassword', methods=['GET'])
+        def change_password():
+            try:
+                result = self.db_mgr.change_password(request.args['openid'], request.args['new-password'])
+                return result
+            except Exception as e:
+                return "失败:{}".format(str(e))
+
+        @app.route('/verifyaccount', methods=['GET'])
+        def verify_account():
+            try:
+                result = self.db_mgr.verify_account(request.args['qq'], request.args['password'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
         self.app = app
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"
