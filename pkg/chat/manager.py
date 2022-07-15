@@ -132,7 +132,7 @@ class ChatBot:
                 except Exception as e:
                     return await self.bot.send(event, "[bot]" + "绑定失败:{}".format(str(e)))
 
-            elif re.match('#unbinding', str(event.message_chain)):
+            elif re.match('#解绑', str(event.message_chain)):
                 try:
                     self.db.unbinding(event.sender.id)
                     return await self.bot.send(event, "[bot]" + "解绑成功")

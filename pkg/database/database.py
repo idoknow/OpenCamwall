@@ -75,11 +75,21 @@ class MySQLConnection:
             results = self.cursor.fetchall()
             for _ in results:
                 # 只要有
-                raise Exception("该QQ号已经绑定了微信号,请先发送 #unbinding 以解绑")
+                raise Exception("该QQ号已经绑定了微信号,请先发送 #解绑 以解绑")
 
-            sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(escape_string(str(uin)), escape_string(openid),
-                                                                                                    int(time.time()))
+            sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(
+                escape_string(str(uin)), escape_string(openid),
+                int(time.time()))
             self.cursor.execute(sql)
+
+            # 插入到绑定表完成了,检查账户密码表
+            sql = "select * from `uniauth` where `openid`='{}'".format(escape_string(openid))
+            self.cursor.execute(sql)
+            results = self.cursor.fetchall()
+            if len(results) == 0:
+                sql = "insert into `uniauth` (`openid`,`timestamp`) values ('{}',{})".format(escape_string(openid),
+                                                                                             int(time.time()))
+                self.cursor.execute(sql)
         finally:
             self.mutex.release()
         # self.connection.commit()
@@ -99,11 +109,13 @@ class MySQLConnection:
             self.mutex.acquire()
 
             sql = "insert into `posts` (`openid`,`qq`,`timestamp`,`text`,`media`,`anonymous`) values ('{}','{}',{},'{}'," \
-                  "'{}',{})".format(escape_string(openid), escape_string(str(qq)), int(time.time()), escape_string(text), escape_string(media), 1 if anonymous else 0)
+                  "'{}',{})".format(escape_string(openid), escape_string(str(qq)), int(time.time()),
+                                    escape_string(text), escape_string(media), 1 if anonymous else 0)
             self.cursor.execute(sql)
             # self.connection.commit()
 
-            sql = "select `id` from `posts` where `openid`='{}' order by `id` desc limit 1".format(escape_string(openid))
+            sql = "select `id` from `posts` where `openid`='{}' order by `id` desc limit 1".format(
+                escape_string(openid))
             self.cursor.execute(sql)
             result = self.cursor.fetchone()
         finally:

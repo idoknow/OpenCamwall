@@ -95,7 +95,7 @@ def main():
         logging.info("已通过二维码登录QQ空间")
 
         # 把cookie写进config.py
-        config_file = open('config.py',encoding='utf-8',mode='r+')
+        config_file = open('config.py', encoding='utf-8', mode='r+')
         config_str = config_file.read()
         config_str = re.sub(r'qzone_cookie = .*', 'qzone_cookie = \'{}\''.format(cookie_str), config_str)
 
@@ -266,8 +266,17 @@ def init_db():
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"""
     db_mgr.cursor.execute(sql)
 
-    db_mgr.connection.commit()
+    print("账户密码表...")
+    sql = """create table `uniauth` (
+        `id` bigint auto_increment primary key,
+        `openid` varchar(128) ,
+        `timestamp` bigint,
+        `password` varchar(2048) default '',
+        `status` varchar(128) default 'valid'
+    );"""
+    db_mgr.cursor.execute(sql)
 
+    db_mgr.connection.commit()
     print("初始化数据库完成")
 
 
