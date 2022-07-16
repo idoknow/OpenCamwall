@@ -91,8 +91,6 @@ class MySQLConnection:
                 sql = "insert into `uniauth` (`openid`,`timestamp`) values ('{}',{})".format(escape_string(openid),
                                                                                              int(time.time()))
                 self.cursor.execute(sql)
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
         # self.connection.commit()
@@ -103,8 +101,6 @@ class MySQLConnection:
             self.ensure_connection()
             sql = "delete from `accounts` where `qq`='{}'".format(escape_string(str(uin)))
             self.cursor.execute(sql)
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
         # self.connection.commit()
@@ -123,8 +119,6 @@ class MySQLConnection:
                 escape_string(openid))
             self.cursor.execute(sql)
             result = self.cursor.fetchone()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -170,8 +164,6 @@ class MySQLConnection:
                                                                                   limit_statement)
             self.cursor.execute(sql)
             results = self.cursor.fetchall()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -208,8 +200,6 @@ class MySQLConnection:
             sql = "select `status` from `posts` where `id`={}".format(post_id)
             self.cursor.execute(sql)
             result = self.cursor.fetchone()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -229,8 +219,6 @@ class MySQLConnection:
             if review != '':
                 sql = "update `posts` set `review`='{}' where `id`={}".format(escape_string(review), post_id)
                 self.cursor.execute(sql)
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -254,8 +242,6 @@ class MySQLConnection:
             sql = "select * from `logs` order by `id` desc {}".format(limit_statement)
             self.cursor.execute(sql)
             logs = self.cursor.fetchall()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -303,8 +289,6 @@ class MySQLConnection:
             sql = "select * from `accounts` where `openid`='{}'".format(escape_string(openid))
             self.cursor.execute(sql)
             accounts = self.cursor.fetchall()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -329,8 +313,6 @@ class MySQLConnection:
             sql = "select * from `constants` where `key`='{}'".format(escape_string(key))
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -356,8 +338,6 @@ class MySQLConnection:
             sql = "select * from `services`"
             self.cursor.execute(sql)
             services = self.cursor.fetchall()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -422,8 +402,6 @@ class MySQLConnection:
                                                                                                      limit_statement)
             self.cursor.execute(sql)
             events = self.cursor.fetchall()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -445,8 +423,6 @@ class MySQLConnection:
             sql = "select * from `static_data` where `key`='{}'".format(escape_string(key))
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -492,8 +468,6 @@ class MySQLConnection:
                   "t\norder by gr_time desc {}".format(limit_statement)
             self.cursor.execute(sql)
             contents = self.cursor.fetchall()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
@@ -554,8 +528,6 @@ class MySQLConnection:
             temp_thread.start()
 
             self.cursor.execute(sql)
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
         return 'success'
@@ -583,8 +555,6 @@ class MySQLConnection:
             if row[3] == '':
                 result['result'] = 'warn:账户未设置密码'
                 return result
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
         return result
@@ -596,8 +566,6 @@ class MySQLConnection:
             sql = "update `uniauth` set `password`='{}' where `openid`='{}'".format(escape_string(password),
                                                                                     escape_string(openid))
             self.cursor.execute(sql)
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
         return 'success'
@@ -636,8 +604,6 @@ class MySQLConnection:
                 result['result'] = 'fail:密码错误'
                 return result
             result['uid'] = hashlib.md5(str(openid+service_name).encode('utf8')).hexdigest()
-        except Exception as e:
-            raise e
         finally:
             self.mutex.release()
 
