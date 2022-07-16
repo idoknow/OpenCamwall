@@ -1,3 +1,4 @@
+import hashlib
 import json
 import threading
 import time
@@ -601,10 +602,10 @@ class MySQLConnection:
             self.mutex.release()
         return 'success'
 
-    def verify_account(self, qq, password):
+    def verify_account(self, qq, password,service_name):
         result = {
             'result': 'success',
-            'openid': '',
+            'uid': '',
         }
 
         try:
@@ -634,7 +635,7 @@ class MySQLConnection:
             if row[3] != password:
                 result['result'] = 'fail:密码错误'
                 return result
-            result['openid'] = openid
+            result['uid'] = hashlib.md5(str(openid+service_name).encode('utf8')).hexdigest()
         except Exception as e:
             raise e
         finally:
