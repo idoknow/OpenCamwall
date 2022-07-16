@@ -158,6 +158,10 @@ class RESTfulAPI:
             except Exception as e:
                 return "失败:{}".format(str(e))
 
+        @app.route('/getloginsalt', methods=['GET'])
+        def get_login_salt():
+            return self.db_mgr.get_current_salt()
+
         @app.route('/verifyaccount', methods=['GET'])
         def verify_account():
             try:

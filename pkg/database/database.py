@@ -2,6 +2,7 @@ import hashlib
 import json
 import threading
 import time
+import uuid
 
 import pymysql as pymysql
 from pymysql.converters import escape_string
@@ -15,6 +16,10 @@ inst = None
 
 def raw_to_escape(raw):
     return raw.replace("\\", "\\\\").replace('\'', '‘')
+
+
+def md5Hash(string):
+    return hashlib.md5(str(string).encode('utf8')).hexdigest()
 
 
 def get_qq_nickname(uin):
@@ -33,6 +38,9 @@ class MySQLConnection:
     # 互斥锁
     mutex = threading.Lock()
 
+    current_salt = ''
+    previous_salt = ''
+
     def __init__(self, host, port, user, password, database, autocommit=True):
         global inst
         self.host = host
@@ -42,6 +50,9 @@ class MySQLConnection:
         self.database = database
 
         inst = self
+
+        salt_thread=threading.Thread(target=self.salt_generator,args=(),daemon=True)
+        salt_thread.start()
 
         self.connect()
 
@@ -65,6 +76,16 @@ class MySQLConnection:
                 if i == attempts - 1:
                     raise Exception('MySQL连接失败')
             time.sleep(2)
+
+    def salt_generator(self):
+        self.current_salt = md5Hash(str(uuid.uuid4()))
+        while True:
+            self.previous_salt = self.current_salt
+            self.current_salt = md5Hash(str(uuid.uuid4()))
+            time.sleep(120)
+
+    def get_current_salt(self):
+        return self.current_salt
 
     def register(self, openid: str, uin):
 
@@ -570,7 +591,7 @@ class MySQLConnection:
             self.mutex.release()
         return 'success'
 
-    def verify_account(self, qq, password,service_name):
+    def verify_account(self, qq, password, service_name):
         result = {
             'result': 'success',
             'uid': '',
@@ -594,16 +615,18 @@ class MySQLConnection:
             if row is None:
                 result['result'] = 'fail:无此账户'
                 return result
-            if row[3]=='':
+            if row[3] == '':
                 result['result'] = 'fail:账户未设置密码'
                 return result
             if row[4] != 'valid':
                 result['result'] = 'fail:账户不可用'
                 return result
-            if row[3] != password:
+            print(row[3]+self.current_salt,row[3]+self.previous_salt)
+            print(md5Hash(row[3]+self.current_salt),md5Hash(row[3]+self.previous_salt))
+            if password != md5Hash(row[3]+self.current_salt) and password != md5Hash(row[3]+self.previous_salt):
                 result['result'] = 'fail:密码错误'
                 return result
-            result['uid'] = hashlib.md5(str(openid+service_name).encode('utf8')).hexdigest()
+            result['uid'] = md5Hash(openid + service_name)
         finally:
             self.mutex.release()
 
