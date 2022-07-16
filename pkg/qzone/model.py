@@ -303,7 +303,7 @@ class QzoneOperator:
                 "uin={}&mask=7&g_tk={}&page=1&fupdate=1&clear=1".format(self.uin, self.gtk2),
             cookies=self.cookie_dict)
         json_text = res.text.replace("_Callback(", '')[:-3]
-        # print(json_text)
+        print(json_text)
 
         json_obj = json.loads(json_text)
         visit_count = json_obj['data']
