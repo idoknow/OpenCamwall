@@ -299,14 +299,14 @@ class QzoneOperator:
 
     def get_visitor_amount_data(self):
         res = requests.get(
-            url="https://h5.qzone.qq.com/proxy/domain/g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_simple?"
-                "uin={}&mask=2&g_tk={}&page=1&fupdate=1".format(
-                self.uin, self.gtk2),
+            url="https://h5.qzone.qq.com/proxy/domain/g.qzone.qq.com/cgi-bin/friendshow/cgi_get_visitor_more?"
+                "uin={}&mask=7&g_tk={}&page=1&fupdate=1&clear=1".format(self.uin, self.gtk2),
             cookies=self.cookie_dict)
-        json_text = res.text.replace("_Callback(", '')[:-2]
+        json_text = res.text.replace("_Callback(", '')[:-3]
+        # print(json_text)
 
         json_obj = json.loads(json_text)
-        visit_count = json_obj['data']['modvisitcount'][0]
+        visit_count = json_obj['data']
         return {
             'today': visit_count['todaycount'],
             'total': visit_count['totalcount'],
