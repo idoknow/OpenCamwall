@@ -603,7 +603,7 @@ class MySQLConnection:
             self.mutex.acquire()
             self.ensure_connection()
             # 从accounts表检出此qq号的openid
-            sql = "select `openid` from `uniauth` where `id`={}".format(escape_string(uid))
+            sql = "select `openid` from `uniauth` where `id`={}".format(int(uid)-10000)
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
             if row is None:
