@@ -2,6 +2,7 @@ import json
 import time
 
 from flask import Flask, request
+from flask_cors import CORS
 import sys
 
 import config
@@ -174,6 +175,8 @@ class RESTfulAPI:
         self.app = app
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"
+
+        CORS(self.app, supports_credentials=True)
 
         self.host = host
         self.port = port
