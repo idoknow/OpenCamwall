@@ -166,7 +166,7 @@ class RESTfulAPI:
         @app.route('/verifyaccount', methods=['GET'])
         def verify_account():
             try:
-                result = self.db_mgr.verify_account(request.args['qq'], request.args['password'],
+                result = self.db_mgr.verify_account(request.args['uid'], request.args['password'],
                                                     request.args['service'])
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
