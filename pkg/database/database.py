@@ -89,8 +89,8 @@ class MySQLConnection:
 
     def register(self, openid: str, uin):
 
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
             sql = "select * from `accounts` where `qq`='{}'".format(escape_string(str(uin)))
             self.cursor.execute(sql)
@@ -117,8 +117,8 @@ class MySQLConnection:
         # self.connection.commit()
 
     def unbinding(self, uin):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
             sql = "delete from `accounts` where `qq`='{}'".format(escape_string(str(uin)))
             self.cursor.execute(sql)
@@ -127,8 +127,8 @@ class MySQLConnection:
         # self.connection.commit()
 
     def post_new(self, text: str, media: str, anonymous: bool, qq: int, openid: str):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             sql = "insert into `posts` (`openid`,`qq`,`timestamp`,`text`,`media`,`anonymous`) values ('{}','{}',{},'{}'," \
                   "'{}',{})".format(escape_string(openid), escape_string(str(qq)), int(time.time()),
@@ -174,8 +174,8 @@ class MySQLConnection:
             limit_statement = "limit {},{}".format((page - 1) * capacity, capacity)
 
         # 计算总数
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
             sql = "select count(*) from `posts` where 1=1 {} order by `id` {}".format(where_statement, order)
             self.cursor.execute(sql)
@@ -214,8 +214,8 @@ class MySQLConnection:
         return result
 
     def update_post_status(self, post_id, new_status, review='', old_status=''):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             self.ensure_connection()
             sql = "select `status` from `posts` where `id`={}".format(post_id)
@@ -231,8 +231,8 @@ class MySQLConnection:
             if result[0] != old_status:
                 raise Exception("此稿件状态不是:{}".format(old_status))
 
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             self.ensure_connection()
             sql = "update `posts` set `status`='{}' where `id`={}".format(escape_string(new_status), post_id)
@@ -250,8 +250,8 @@ class MySQLConnection:
         temp_thread.start()
 
     def pull_log_list(self, capacity=10, page=1):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             self.ensure_connection()
             limit_statement = "limit {},{}".format((page - 1) * capacity, capacity)
@@ -290,8 +290,8 @@ class MySQLConnection:
         }
 
         # 检查是否被封禁
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             sql = "select * from `banlist` where `openid`='{}' order by id desc".format(escape_string(openid))
             self.cursor.execute(sql)
@@ -327,8 +327,8 @@ class MySQLConnection:
         return result
 
     def fetch_constant(self, key):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             self.ensure_connection()
             sql = "select * from `constants` where `key`='{}'".format(escape_string(key))
@@ -352,8 +352,8 @@ class MySQLConnection:
         return result
 
     def fetch_service_list(self):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             self.ensure_connection()
             sql = "select * from `services`"
@@ -407,8 +407,8 @@ class MySQLConnection:
         sql = "select count(*) from `events` where `timestamp`>={} and `timestamp`<={} {} {}".format(begin_ts, end_ts,
                                                                                                      type_condition,
                                                                                                      json_like_condition)
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
 
             self.cursor.execute(sql)
@@ -437,8 +437,8 @@ class MySQLConnection:
         return result
 
     def fetch_static_data(self, key):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             self.ensure_connection()
             sql = "select * from `static_data` where `key`='{}'".format(escape_string(key))
@@ -460,8 +460,8 @@ class MySQLConnection:
         return result
 
     def fetch_content_list(self, capacity, page):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
             limit_statement = "limit {},{}".format((page - 1) * capacity, capacity)
             sql = "select count(*) \nfrom (\n\tselect p.id pid,p.openid,e.id eid,p.`status` `status`,(\n\t\tcase " \
@@ -512,8 +512,8 @@ class MySQLConnection:
 
             if content[3] != '':
                 # 检出所有点赞记录
+                self.mutex.acquire()
                 try:
-                    self.mutex.acquire()
                     sql = "select `timestamp`,json from `events` where `type`='liker_record' and `json` like '%{}%' order by `timestamp`;".format(
                         content[3])
                     self.cursor.execute(sql)
@@ -533,8 +533,8 @@ class MySQLConnection:
         return result
 
     def user_feedback(self, openid, content, media):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
 
             self.ensure_connection()
             sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`)" \
@@ -561,8 +561,8 @@ class MySQLConnection:
             'openid': openid,
             'timestamp': 0,
         }
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
             sql = "select * from `uniauth` where `openid`='{}'".format(escape_string(openid))
             self.cursor.execute(sql)
@@ -583,8 +583,8 @@ class MySQLConnection:
         return result
 
     def change_password(self, openid, password):
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
             sql = "update `uniauth` set `password`='{}' where `openid`='{}'".format(escape_string(password),
                                                                                     escape_string(openid))
@@ -599,8 +599,8 @@ class MySQLConnection:
             'uid': '',
         }
 
+        self.mutex.acquire()
         try:
-            self.mutex.acquire()
             self.ensure_connection()
             # 从accounts表检出此qq号的openid
             sql = "select `openid` from `uniauth` where `id`={}".format(int(uid)-10000)

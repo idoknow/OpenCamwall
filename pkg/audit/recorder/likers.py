@@ -82,14 +82,16 @@ class Emotion:
 
                 try:
                     # 存数据库
+                    pkg.database.database.get_inst().mutex.acquire()
+                    try:
+                        pkg.database.database.get_inst().ensure_connection()
 
-                    pkg.database.database.get_inst().ensure_connection()
-
-                    sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
-                        pkg.audit.recorder.visitors.TYPE_LIKER_RECORD, int(time.time()), jsontext)
-                    logging.info("说说(pid:{}) 时间点{}记录".format(self.pid, interval))
-                    pkg.database.database.get_inst().cursor.execute(sql)
-
+                        sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
+                            pkg.audit.recorder.visitors.TYPE_LIKER_RECORD, int(time.time()), jsontext)
+                        logging.info("说说(pid:{}) 时间点{}记录".format(self.pid, interval))
+                        pkg.database.database.get_inst().cursor.execute(sql)
+                    finally:
+                        pkg.database.database.get_inst().mutex.release()
                 except Exception as e1:
                     logging.exception(e1)
             else:
@@ -97,9 +99,13 @@ class Emotion:
                 # invalid
                 self.valid = 0
                 # 修改数据库记录
-                sql = "update `emotions` set `valid`=0 where id={}".format(self.id)
-                pkg.database.database.get_inst().cursor.execute(sql)
 
+                pkg.database.database.get_inst().mutex.acquire()
+                try:
+                    sql = "update `emotions` set `valid`=0 where id={}".format(self.id)
+                    pkg.database.database.get_inst().cursor.execute(sql)
+                finally:
+                    pkg.database.database.get_inst().mutex.release()
         else:
             raise Exception("err msg:" + respobj["message"])
 
@@ -141,17 +147,20 @@ def fetch_new_emotions():
                     pid = int(str(postid[0]).replace("##", ""))
 
                 try:
-                    pkg.database.database.get_inst().ensure_connection()
+                    pkg.database.database.get_inst().mutex.acquire()
+                    try:
+                        pkg.database.database.get_inst().ensure_connection()
 
-                    sql = "insert into `emotions` (`pid`,`eid`,`timestamp`,`valid`) values" \
-                          " ({},'{}',{},1)".format(pid, emo["tid"], emo["time"])
+                        sql = "insert into `emotions` (`pid`,`eid`,`timestamp`,`valid`) values" \
+                              " ({},'{}',{},1)".format(pid, emo["tid"], emo["time"])
 
-                    pkg.database.database.get_inst().cursor.execute(sql)
+                        pkg.database.database.get_inst().cursor.execute(sql)
 
-                    pkg.database.database.get_inst().cursor.execute(
-                        "select id from `emotions` where `eid`='{}'".format(emo["tid"]))
-                    id = int(pkg.database.database.get_inst().cursor.fetchone()[0])
-
+                        pkg.database.database.get_inst().cursor.execute(
+                            "select id from `emotions` where `eid`='{}'".format(emo["tid"]))
+                        id = int(pkg.database.database.get_inst().cursor.fetchone()[0])
+                    finally:
+                        pkg.database.database.get_inst().mutex.release()
                     # 存运行时变量
                     emotion_obj = Emotion(id, pid, emo["tid"], emo["time"], 1)
 
@@ -179,10 +188,14 @@ def load_tracking_emotions():  # 从数据库加载所有仍在跟踪的说说�
     now = int(time.time())
     max_time_ago = now - record_time[-1]
 
-    pkg.database.database.get_inst().ensure_connection()
-    pkg.database.database.get_inst().cursor.execute(
-        "select id,`pid`,`eid`,`timestamp`,`valid` from `emotions` where `timestamp`>={};".format(max_time_ago))
-    rows = pkg.database.database.get_inst().cursor.fetchall()
+    pkg.database.database.get_inst().mutex.acquire()
+    try:
+        pkg.database.database.get_inst().ensure_connection()
+        pkg.database.database.get_inst().cursor.execute(
+            "select id,`pid`,`eid`,`timestamp`,`valid` from `emotions` where `timestamp`>={};".format(max_time_ago))
+        rows = pkg.database.database.get_inst().cursor.fetchall()
+    finally:
+        pkg.database.database.get_inst().mutex.release()
 
     for row in rows:
         emotion_obj = Emotion(row[0], row[1], row[2], row[3], row[4])

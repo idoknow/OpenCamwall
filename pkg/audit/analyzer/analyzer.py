@@ -69,25 +69,29 @@ def analyze_history_heat_rate_and_heat():
     data.append(["{}".format(datet.date()), last_recorded_amount_of_day])
 
     try:
-        make_db_conn_sure()
-        # 存数据库
-        logging.info("分析日访客量完成")
+        pkg.database.database.get_inst().mutex.acquire()
+        try:
+            make_db_conn_sure()
+            # 存数据库
+            logging.info("分析日访客量完成")
 
-        sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_rate';".format(
-            int(time.time()), json.dumps(data))
-        pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_rate';".format(
+                int(time.time()), json.dumps(data))
+            pkg.database.database.get_inst().cursor.execute(sql)
 
-        logging.info("分析总访客量曲线完成")
+            logging.info("分析总访客量曲线完成")
 
-        sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat';".format(
-            int(time.time()), json.dumps(data_heat))
-        pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat';".format(
+                int(time.time()), json.dumps(data_heat))
+            pkg.database.database.get_inst().cursor.execute(sql)
 
-        logging.info("分析总访客量每小时完成")
+            logging.info("分析总访客量每小时完成")
 
-        sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_per_hour';".format(
-            int(time.time()), json.dumps(data_heat_per_hour))
-        pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_per_hour';".format(
+                int(time.time()), json.dumps(data_heat_per_hour))
+            pkg.database.database.get_inst().cursor.execute(sql)
+        finally:
+            pkg.database.database.get_inst().mutex.release()
     except Exception as e:
         logging.exception(e)
 
@@ -97,29 +101,33 @@ def analyze_history_emo_posted():
     global db_cursor, mysql_conn
 
     try:
-        make_db_conn_sure()
-        now = int(time.time())
-        pkg.database.database.get_inst().cursor.execute(
-            "select `pid`,`timestamp` from `emotions` where `timestamp` >={}".format(
-                now - now % 86400 - (86400 * 100) - 8 * 3600))
+        pkg.database.database.get_inst().mutex.acquire()
+        try:
+            make_db_conn_sure()
+            now = int(time.time())
+            pkg.database.database.get_inst().cursor.execute(
+                "select `pid`,`timestamp` from `emotions` where `timestamp` >={}".format(
+                    now - now % 86400 - (86400 * 100) - 8 * 3600))
 
-        data = []
-        while True:
-            result = pkg.database.database.get_inst().cursor.fetchone()
-            if result is None:
-                break
-            if result[0] == -1:
-                continue
-            data.append([int(result[1] * 1000), result[0]])
+            data = []
+            while True:
+                result = pkg.database.database.get_inst().cursor.fetchone()
+                if result is None:
+                    break
+                if result[0] == -1:
+                    continue
+                data.append([int(result[1] * 1000), result[0]])
 
-        # 存数据库
-        logging.info("分析说说发表完成")
+            # 存数据库
+            logging.info("分析说说发表完成")
 
-        make_db_conn_sure()
+            make_db_conn_sure()
 
-        sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_emo_posted';".format(
-            int(time.time()), json.dumps(data))
-        pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_emo_posted';".format(
+                int(time.time()), json.dumps(data))
+            pkg.database.database.get_inst().cursor.execute(sql)
+        finally:
+            pkg.database.database.get_inst().mutex.release()
     except Exception as e:
         logging.exception(e)
 
@@ -174,11 +182,16 @@ def analyze_visitor_heat():
         # 存数据库
         logging.info("分析周时段热力完成")
 
-        make_db_conn_sure()
+        pkg.database.database.get_inst().mutex.acquire()
 
-        sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'visitor_heat';".format(
-            int(time.time()), json.dumps(data))
-        pkg.database.database.get_inst().cursor.execute(sql)
+        try:
+            make_db_conn_sure()
+
+            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'visitor_heat';".format(
+                int(time.time()), json.dumps(data))
+            pkg.database.database.get_inst().cursor.execute(sql)
+        finally:
+            pkg.database.database.get_inst().mutex.release()
     else:
         raise Exception("err:message:" + result["result"])
 
