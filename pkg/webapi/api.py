@@ -1,4 +1,5 @@
 import json
+import logging
 import time
 
 from flask import Flask, request
@@ -42,6 +43,7 @@ class RESTfulAPI:
 
                 return '操作成功'
             except Exception as e:
+                logging.exception(e)
                 return str(e)
 
         @app.route('/pullonepoststatus', methods=['GET'])
@@ -51,6 +53,7 @@ class RESTfulAPI:
                                                    openid=request.args['openid'] if 'openid' in request.args else '')
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
         @app.route('/pullmultipostsstatus', methods=['GET'])
@@ -61,6 +64,7 @@ class RESTfulAPI:
 
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
         @app.route('/updatepoststatus', methods=['GET'])
@@ -70,6 +74,7 @@ class RESTfulAPI:
                                                review=request.args['review'] if 'review' in request.args else '')
                 return 'success'
             except Exception as e:
+                logging.exception(e)
                 return str(e)
 
         @app.route('/cancelonepost', methods=['GET'])
@@ -81,6 +86,7 @@ class RESTfulAPI:
 
                 return 'success'
             except Exception as e:
+                logging.exception(e)
                 return str(e)
 
         @app.route('/pullloglist', methods=['GET'])
@@ -89,6 +95,7 @@ class RESTfulAPI:
                 result = self.db_mgr.pull_log_list(int(request.args['capacity']), int(request.args['page']))
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 # raise e
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
@@ -98,6 +105,7 @@ class RESTfulAPI:
                 result = self.db_mgr.fetch_qq_accounts(request.args['openid'])
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 # raise e
                 return "{}".format(str(e))
 
@@ -107,6 +115,7 @@ class RESTfulAPI:
                 result = self.db_mgr.fetch_constant(request.args['key'])
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
         @app.route('/fetchservicelist', methods=['GET'])
@@ -115,6 +124,7 @@ class RESTfulAPI:
                 result = self.db_mgr.fetch_service_list()
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
         @app.route('/events/fetchstaticdata', methods=['GET'])
@@ -123,6 +133,7 @@ class RESTfulAPI:
                 result = self.db_mgr.fetch_static_data(request.args['key'])
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
         @app.route('/events/fetchcontents', methods=['GET'])
@@ -131,6 +142,7 @@ class RESTfulAPI:
                 result = self.db_mgr.fetch_content_list(int(request.args['capacity']), int(request.args['page']))
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 # raise e
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
@@ -141,6 +153,7 @@ class RESTfulAPI:
                                                    media=request.args['media'])
                 return result
             except Exception as e:
+                logging.exception(e)
                 return "失败:{}".format(str(e))
 
         @app.route('/fetchuniauthinfo', methods=['GET'])
@@ -149,6 +162,7 @@ class RESTfulAPI:
                 result = self.db_mgr.fetch_uniauth_by_openid(request.args['openid'])
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
         @app.route('/changepassword', methods=['GET'])
@@ -157,6 +171,7 @@ class RESTfulAPI:
                 result = self.db_mgr.change_password(request.args['openid'], request.args['new-password'])
                 return result
             except Exception as e:
+                logging.exception(e)
                 return "失败:{}".format(str(e))
 
         @app.route('/getloginsalt', methods=['GET'])
@@ -170,6 +185,7 @@ class RESTfulAPI:
                                                     request.args['service'])
                 return json.dumps(result, ensure_ascii=False)
             except Exception as e:
+                logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
         self.app = app
