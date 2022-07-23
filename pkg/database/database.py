@@ -297,11 +297,19 @@ class MySQLConnection:
         result = {
             'isbanned': False,
         }
-
-        # 检查是否被封禁
         self.acquire()
         try:
 
+            # 检查账户密码表,不存在则插入
+            sql = "select * from `uniauth` where `openid`='{}'".format(escape_string(openid))
+            self.cursor.execute(sql)
+            results = self.cursor.fetchall()
+            if len(results) == 0:
+                sql = "insert into `uniauth` (`openid`,`timestamp`) values ('{}',{})".format(escape_string(openid),
+                                                                                             int(time.time()))
+                self.cursor.execute(sql)
+
+            # 检查是否被封禁
             sql = "select * from `banlist` where `openid`='{}' order by id desc".format(escape_string(openid))
             self.cursor.execute(sql)
             ban = self.cursor.fetchone()
