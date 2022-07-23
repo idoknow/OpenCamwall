@@ -42,13 +42,18 @@ def record_visitor():
             jsontext = json.dumps(result)
 
             if result["total_amount"] != 0:
-                pkg.database.database.get_inst().ensure_connection()
+                pkg.database.database.get_inst().acquire()
+                try:
 
-                sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
-                    TYPE_VISITOR_INCREASE, int(time.time()), jsontext)
-                logging.info("记录空间访客:" + str(obj['data']))
-                pkg.database.database.get_inst().cursor.execute(sql)
-                last_record_total = obj["data"]["total"]
+                    pkg.database.database.get_inst().ensure_connection()
+
+                    sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
+                        TYPE_VISITOR_INCREASE, int(time.time()), jsontext)
+                    logging.info("记录空间访客:" + str(obj['data']))
+                    pkg.database.database.get_inst().cursor.execute(sql)
+                    last_record_total = obj["data"]["total"]
+                finally:
+                    pkg.database.database.get_inst().release()
         last_today_amount = obj["data"]["today"]
     except Exception as e:
         logging.exception(e)
@@ -57,10 +62,14 @@ def record_visitor():
 def initialize_visitor_recorder():
     global mysql_conn, db_cursor, last_record_total
     # 读取上次的访客数量
-    pkg.database.database.get_inst().ensure_connection()
-    pkg.database.database.get_inst().cursor.execute(
-        "select `json` from `events` where `type`='" + TYPE_VISITOR_INCREASE + "' order by id desc limit 1;")
-    lsjson = pkg.database.database.get_inst().cursor.fetchone()
+    pkg.database.database.get_inst().acquire()
+    try:
+        pkg.database.database.get_inst().ensure_connection()
+        pkg.database.database.get_inst().cursor.execute(
+            "select `json` from `events` where `type`='" + TYPE_VISITOR_INCREASE + "' order by id desc limit 1;")
+        lsjson = pkg.database.database.get_inst().cursor.fetchone()
+    finally:
+        pkg.database.database.get_inst().release()
     obj = json.loads(lsjson[0])
     last_record_total = obj["total_amount"]
     visitor_observer_loop()
