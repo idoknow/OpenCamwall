@@ -79,12 +79,12 @@ class MySQLConnection:
             time.sleep(2)
 
     def acquire(self):
-        logging.info('acquire')
         self.mutex.acquire()
+        logging.info('acquire')
 
     def release(self):
-        logging.info('release')
         self.mutex.release()
+        logging.info('release')
 
     def salt_generator(self):
         self.current_salt = md5Hash(str(uuid.uuid4()))
