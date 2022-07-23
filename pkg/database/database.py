@@ -31,20 +31,12 @@ def get_qq_nickname(uin):
     return nickname
 
 
-class MyMutex(threading.Lock):
-    def acquire(self, blocking: bool = ..., timeout: float = ...) -> bool:
-        return super().acquire(blocking, timeout)
-
-    def release(self):
-        return super().release()
-
-
 class MySQLConnection:
     connection = None
     cursor = None
 
     # 互斥锁
-    mutex = MyMutex()
+    mutex = threading.Lock()
 
     current_salt = ''
     previous_salt = ''
@@ -59,7 +51,7 @@ class MySQLConnection:
 
         inst = self
 
-        salt_thread = threading.Thread(target=self.salt_generator, args=(), daemon=True)
+        salt_thread=threading.Thread(target=self.salt_generator,args=(),daemon=True)
         salt_thread.start()
 
         self.connect()
@@ -564,7 +556,7 @@ class MySQLConnection:
     def fetch_uniauth_by_openid(self, openid):
 
         result = {
-            'uid': 0,
+            'uid':0,
             'result': 'success',
             'openid': openid,
             'timestamp': 0,
@@ -579,7 +571,7 @@ class MySQLConnection:
                 result['result'] = 'fail:没有此账户'
                 return result
             result['timestamp'] = row[2]
-            result['uid'] = row[0] + 10000
+            result['uid'] = row[0]+10000
             if row[4] != 'valid':
                 result['result'] = 'fail:账户不可用'
                 return result
@@ -611,7 +603,7 @@ class MySQLConnection:
         try:
             self.ensure_connection()
             # 从accounts表检出此qq号的openid
-            sql = "select `openid` from `uniauth` where `id`={}".format(int(uid) - 10000)
+            sql = "select `openid` from `uniauth` where `id`={}".format(int(uid)-10000)
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
             if row is None:
@@ -632,7 +624,7 @@ class MySQLConnection:
                 result['result'] = 'fail:账户不可用'
                 return result
 
-            if password != md5Hash(row[3] + self.current_salt) and password != md5Hash(row[3] + self.previous_salt):
+            if password != md5Hash(row[3]+self.current_salt) and password != md5Hash(row[3]+self.previous_salt):
                 result['result'] = 'fail:密码错误'
                 return result
             result['uid'] = md5Hash(openid + service_name)
