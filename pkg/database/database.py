@@ -106,7 +106,7 @@ class MySQLConnection:
             results = self.cursor.fetchall()
             for _ in results:
                 # 只要有
-                raise Exception("该QQ号已经绑定了微信号,请先发送 #解绑 以解绑")
+                raise Exception("该QQ号已经绑定了微信号,请进入小程序尝试刷新,若要解除绑定请发送 #解绑")
 
             sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(
                 escape_string(str(uin)), escape_string(openid),
