@@ -155,7 +155,7 @@ class MySQLConnection:
 
     def pull_one_post(self, post_id=-1, status='', openid='', order='asc'):
         results = self.pull_posts(post_id, status, openid, order, capacity=1)
-        if len(results) > 0:
+        if len(results['posts']) > 0:
             return results['posts'][0]
         else:
             return {'result': 'err:no result'}
