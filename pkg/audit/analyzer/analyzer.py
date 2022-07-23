@@ -69,7 +69,7 @@ def analyze_history_heat_rate_and_heat():
     data.append(["{}".format(datet.date()), last_recorded_amount_of_day])
 
     try:
-        pkg.database.database.get_inst().mutex.acquire()
+        pkg.database.database.get_inst().acquire()
         try:
             make_db_conn_sure()
             # 存数据库
@@ -91,7 +91,7 @@ def analyze_history_heat_rate_and_heat():
                 int(time.time()), json.dumps(data_heat_per_hour))
             pkg.database.database.get_inst().cursor.execute(sql)
         finally:
-            pkg.database.database.get_inst().mutex.release()
+            pkg.database.database.get_inst().release()
     except Exception as e:
         logging.exception(e)
 
@@ -101,7 +101,7 @@ def analyze_history_emo_posted():
     global db_cursor, mysql_conn
 
     try:
-        pkg.database.database.get_inst().mutex.acquire()
+        pkg.database.database.get_inst().acquire()
         try:
             make_db_conn_sure()
             now = int(time.time())
@@ -127,7 +127,7 @@ def analyze_history_emo_posted():
                 int(time.time()), json.dumps(data))
             pkg.database.database.get_inst().cursor.execute(sql)
         finally:
-            pkg.database.database.get_inst().mutex.release()
+            pkg.database.database.get_inst().release()
     except Exception as e:
         logging.exception(e)
 
@@ -155,7 +155,7 @@ def analyze_visitor_heat():
                 # 提取十分钟内的点赞量
                 eventjson = json.loads(event["json"])
                 wd, h_in_day = __calc_day_and_hour(event["timestamp"])
-                if h_in_day > 2 and h_in_day < 7:
+                if 2 < h_in_day < 7:
                     continue
 
                 # print("append temp:",TIME_PERIOD.index(h_in_day),h_in_day,event["timestamp"])
@@ -182,7 +182,7 @@ def analyze_visitor_heat():
         # 存数据库
         logging.info("分析周时段热力完成")
 
-        pkg.database.database.get_inst().mutex.acquire()
+        pkg.database.database.get_inst().acquire()
 
         try:
             make_db_conn_sure()
@@ -191,7 +191,7 @@ def analyze_visitor_heat():
                 int(time.time()), json.dumps(data))
             pkg.database.database.get_inst().cursor.execute(sql)
         finally:
-            pkg.database.database.get_inst().mutex.release()
+            pkg.database.database.get_inst().release()
     else:
         raise Exception("err:message:" + result["result"])
 
@@ -215,9 +215,12 @@ def make_db_conn_sure():
 
 
 def analyze_all():
-    analyze_visitor_heat()
-    analyze_history_heat_rate_and_heat()
-    analyze_history_emo_posted()
+    try:
+        analyze_visitor_heat()
+        analyze_history_heat_rate_and_heat()
+        analyze_history_emo_posted()
+    except Exception as e:
+        logging.exception(e)
 
 
 def analyzer_loop():
@@ -225,9 +228,9 @@ def analyzer_loop():
         try:
             logging.info("启动分析...")
             analyze_all()
-            logging.info("完成时间:"+str(time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())))
+            logging.info("完成时间:" + str(time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())))
         except Exception as e:
-            logging.error("无法完成分析"+str(time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())))
+            logging.error("无法完成分析" + str(time.strftime("%Y-%m-%d-%H_%M_%S", time.localtime())))
             logging.exception(e)
         time.sleep(60 * ANALYZE_ALL_PERIOD)
 
