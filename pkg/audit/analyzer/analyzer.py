@@ -17,7 +17,7 @@ db_cursor = 0
 def analyze_history_heat_rate_and_heat():
     global db_cursor, mysql_conn
 
-    AMOUNT_PER_QUERY = 500
+    AMOUNT_PER_QUERY = 1000
 
     now = int(time.time())
 
