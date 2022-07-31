@@ -80,11 +80,9 @@ class MySQLConnection:
 
     def acquire(self):
         self.mutex.acquire()
-        logging.info('acquire')
 
     def release(self):
         self.mutex.release()
-        logging.info('release')
 
     def salt_generator(self):
         self.current_salt = md5Hash(str(uuid.uuid4()))
