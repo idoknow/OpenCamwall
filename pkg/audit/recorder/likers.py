@@ -102,6 +102,7 @@ class Emotion:
 
                 pkg.database.database.get_inst().acquire()
                 try:
+                    pkg.database.database.get_inst().ensure_connection()
                     sql = "update `emotions` set `valid`=0 where id={}".format(self.id)
                     pkg.database.database.get_inst().cursor.execute(sql)
                 finally:
