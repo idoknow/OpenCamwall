@@ -9,6 +9,17 @@
 
 前端即将开源,敬请期待!
 
+## 包
+
+- audit 系统数据分析
+    - analyzer 数据分析
+    - recorder 数据监控
+- chat QQ机器人模块
+- database 包装数据库调用的方法
+- qzone 管理QQ空间登录、发表说说等功能
+- routines 各功能的一些操作步骤
+- webapi 为小程序访问及其他端提供RESTful API接口
+
 ## 后端功能
 
 - [x] 通过RESTful API接收用户从小程序端发送的稿件  
