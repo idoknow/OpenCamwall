@@ -10,20 +10,30 @@ import pkg.database.database
 
 import pkg.routines.qzone_routines
 import pkg.qzone.model
+import pkg.qzone.publisher
 
 
 def new_post_incoming(post_data):
-    chat_inst = pkg.chat.manager.get_inst()
-    chat_inst.send_message_to_admin_groups([
+    # 下载图片并准备消息链
+    medias = json.loads(post_data['media'])
+    message_chain = [
         "[bot]" +
         "收到新投稿\n" +
         "内容:\n" +
         post_data['text'] + "\n"
-                            "图片:" + str(len(json.loads(post_data['media']))) + "张\n" +
+                            "图片:" + str(len(medias)) + "张\n" +
         "匿名:" + ("是" if post_data['anonymous'] else "否") + "\n" +
         "QQ:" + str(post_data['qq']) + "\n" +
         "id:##" + str(post_data['id'])
-    ])
+    ]
+    if len(medias) > 0:
+        # 下载所有图片
+        publisher = pkg.qzone.publisher.get_inst()
+        for media in medias:
+            message_chain.append(Image(path=publisher.download_cloud_image(media, 'cache/{}'.format(int(time.time())))))
+
+    chat_inst = pkg.chat.manager.get_inst()
+    chat_inst.send_message_to_admin_groups(message_chain)
 
 
 def post_status_changed(post_id, new_status):
@@ -57,7 +67,7 @@ def post_finished(post_id, qq, tid):
         # 发送赞助信息给用户
         if config.sponsor_message != '':
             # 包装消息链
-            message_chain=[config.sponsor_message]
+            message_chain = [config.sponsor_message]
 
             for sponsor_qrcode in config.sponsor_qrcode_path:
                 if Path(sponsor_qrcode).exists():

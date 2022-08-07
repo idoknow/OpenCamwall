@@ -328,11 +328,12 @@ class EmotionPublisher:
         # 下载图片文件
 
         for media in json.loads(post['media']):
-            image_files.append(self.downloadCloudImage(media, 'cache/{}'.format(int(time.time()))))
+            image_files.append(self.download_cloud_image(media, 'cache/{}'.format(int(time.time()))))
 
         return pkg.qzone.model.get_inst().publish_emotion(text, image_files)
 
-    def downloadCloudImage(self, cloud, path):
+    def download_cloud_image(self, cloud, path):
+        """从微信云储存下载图片"""
         try:
             try:
                 os.mkdir(path)
