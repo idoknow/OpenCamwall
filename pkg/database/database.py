@@ -298,6 +298,10 @@ class MySQLConnection:
         result = {
             'isbanned': False,
         }
+
+        if openid == '':
+            raise Exception("openid不能为空")
+
         self.acquire()
         try:
             self.ensure_connection()
