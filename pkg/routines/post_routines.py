@@ -46,10 +46,11 @@ def post_status_changed(post_id, new_status):
     elif new_status == '拒绝':
         db_inst = pkg.database.database.get_inst()
         post = db_inst.pull_one_post(post_id=post_id)
-        chat_inst.send_message(target_type='person', target=post['qq'], message="[bot](无需回复)\n您{}的投稿已被拒绝\n"
-                                                                                "id:##{}\n内容:{}\n图片:{}张\n原因:{}"
-                               .format('匿名' if post['anonymous'] else '不匿名', post_id, post['text'],
-                                       str(len(json.loads(post['media']))), post['review']))
+        if post['review'] != '无原因':
+            chat_inst.send_message(target_type='person', target=post['qq'], message="[bot](无需回复)\n您{}的投稿已被拒绝\n"
+                                                                                    "id:##{}\n内容:{}\n图片:{}张\n原因:{}"
+                                   .format('匿名' if post['anonymous'] else '不匿名', post_id, post['text'],
+                                           str(len(json.loads(post['media']))), post['review']))
     elif new_status == '通过':
         pkg.routines.qzone_routines.clean_pending_posts()
 
