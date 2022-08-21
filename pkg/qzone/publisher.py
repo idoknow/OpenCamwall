@@ -30,6 +30,29 @@ def get_qq_nickname(uin):
     return nickname
 
 
+def is_emoji(content):
+    if not content:
+        return False
+    if u"\U0001F300" <= content <= u"\U0001F9EF":
+        return True
+    else:
+        return False
+
+
+def ensure_emoji(unicode):
+    if not os.path.isfile("emojis/{}.png".format(unicode)):
+        url = 'https://www.emojiall.com/images/60/apple/{}.png'.format(unicode)
+        try:
+            res = requests.get(url)
+            if res.status_code != 200:
+                return False
+            with open('emojis/{}.png'.format(unicode), 'wb') as f:
+                f.write(res.content)
+        except:
+            return False
+    return True
+
+
 def indexNumber(path=''):
     """
     查找字符串中数字所在串中的位置
@@ -224,7 +247,6 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
 
     # 绘制标签
 
-
     x = 0
     for l in labels:
         ltext = l.replace("[", "").replace("]", "")
@@ -239,14 +261,36 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
     offset_y = 130
     for final_line in final_lines:
         draw.text((offset_x, offset_y + 35 * line_number), final_line, fill=(0, 0, 0), font=text_render_font)
+        # 遍历此行,检查是否有emoji
+        idx_in_line = 0
+        for ch in final_line:
+            if is_emoji(ch):
+                emoji_img_valid = ensure_emoji(hex(ord(ch))[2:])
+                if emoji_img_valid:  # emoji图像可用,绘制到指定位置
+                    emoji_image = Image.open("emojis/{}.png".format(hex(ord(ch))[2:]), mode='r').convert('RGBA')
+                    emoji_image = emoji_image.resize((32, 32))
+
+                    x, y = emoji_image.size
+
+                    final_emoji_img = Image.new('RGBA', emoji_image.size, (255, 255, 255))
+                    final_emoji_img.paste(emoji_image, (0, 0, x, y), emoji_image)
+
+                    img.paste(final_emoji_img, box=(int(offset_x + idx_in_line * 32), offset_y + 35 * line_number))
+
+            # 检查字符占位宽
+            char_code = ord(ch)
+            if char_code >= 127:
+                idx_in_line += 1
+            else:
+                idx_in_line += 0.5
+
         line_number += 1
 
     # 绘制角落
-
-    if left_bottom_text == None:
+    if left_bottom_text is None:
         left_bottom_text = ('匿名用户' if post['anonymous'] else nick_name) + " 发表于 " + (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(post['timestamp'])))
-    if right_bottom_text == None:
+    if right_bottom_text is None:
         right_bottom_text = "开发 @RockChinQ | @Soulter"
 
     draw.text((25, img.size[1] - 25), left_bottom_text, fill=(130, 130, 130), font=comment_text)
@@ -373,13 +417,15 @@ def get_inst() -> EmotionPublisher:
 
 
 if __name__ == '__main__':
+    # text = "😀😁😂🤣😃😄😅😆😉😊😋😎😍😘🥰😗😙🥲😚🙂🤗🤩🤔🤨😐😑😶🌫😏😣😥😮🤐😯😪😫🥱😴😌😛😜😝🤤😒😓😔😕🙃🤑😲🙁😞😟😤😢😭😦😧😨😩🤯😬😮💨😰😱🥵🥶😳🤪😵😵💫🥴😠😡🤬😷🤒🤕🤢🤮🤧😇🥳🥸🥺🤠🤡🤥🤫🤭🧐🤓"
+    text = "🧔🤴👳🎋🎃🎈🧨✨🎉🎉🎉🎉🎉🪢🪢🥼🥼🥽🥽🖼🖼🎨🎨🧵🎖🥇🥈🥉🏅🎲🍔🍕🍗🍖🥡🥠🍘"
     render_text_image({
         "result": "success",
         "id": 764,
         "openid": "",
         "qq": "",
         "timestamp": 1648184113,
-        "text": "我111111111111111111111111111111杀杀杀杀杀杀杀杀杀杀杀杀杀杀杀http://baidu.com顶顶顶顶顶顶顶顶顶顶顶顶法国呱呱呱呱呱呱古古怪怪",
+        "text": text,
         "media": "[]",
         "anonymous": 1,
         "status": "通过",
