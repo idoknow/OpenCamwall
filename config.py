@@ -69,6 +69,7 @@ mini_program_secret = '1234567890'
 logging_level = logging.INFO
 
 # 发表完成之后提示原作者的赞助语,若为空则不提示
+# 注意:频繁发送收款二维码可能会导致QQ账号被腾讯冻结
 sponsor_message = ''
 
 # 赞助收款码
