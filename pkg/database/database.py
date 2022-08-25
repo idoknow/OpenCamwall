@@ -1,16 +1,16 @@
 import hashlib
 import json
-import logging
+import math
 import threading
 import time
 import uuid
 
 import pymysql as pymysql
-from pymysql.converters import escape_string
 import requests
+from pymysql.converters import escape_string
 
-import pkg.routines.post_routines
 import pkg.routines.feedback_routines
+import pkg.routines.post_routines
 
 inst = None
 
@@ -179,10 +179,6 @@ class MySQLConnection:
         if openid != '':
             where_statement += " and `openid`='{}'".format(openid)
 
-        limit_statement = ''
-        if capacity != -1:
-            limit_statement = "limit {},{}".format((page - 1) * capacity, capacity)
-
         # 计算总数
         self.acquire()
         try:
@@ -190,6 +186,16 @@ class MySQLConnection:
             sql = "select count(*) from `posts` where 1=1 {} order by `id` {}".format(where_statement, order)
             self.cursor.execute(sql)
             total = self.cursor.fetchone()[0]
+
+            # 计算page是否超范围
+            if page > math.ceil(total / capacity):
+                page = math.ceil(total / capacity)
+                if page == 0:
+                    page = 1
+
+            limit_statement = ''
+            if capacity != -1:
+                limit_statement = "limit {},{}".format((page - 1) * capacity, capacity)
 
             sql = "select * from `posts` where 1=1 {} order by `id` {} {}".format(where_statement, order,
                                                                                   limit_statement)
