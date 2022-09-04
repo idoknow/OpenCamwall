@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 import logging
+from pathlib import Path
 
 import config
 import colorlog
@@ -55,7 +56,8 @@ def main():
     emotion_publisher = pkg.qzone.publisher.EmotionPublisher(
         env_id=config.cloud_env_id,
         app_id=config.mini_program_appid,
-        app_secret=config.mini_program_secret
+        app_secret=config.mini_program_secret,
+        watermarker=("cache/watermarker.jpg" if Path("cache/watermarker.jpg").exists() else '')
     )
 
     chat_bot_thread = threading.Thread(target=chat_bot.bot.run, args=(), daemon=True)

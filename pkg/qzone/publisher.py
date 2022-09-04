@@ -11,7 +11,7 @@ import time
 
 import requests
 
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 inst = None
 
@@ -161,7 +161,7 @@ def find_labels(text):
     return re.findall(r'#\[.+?\]#', text)
 
 
-def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_bottom_text=None):
+def render_text_image(post, path='cache/text.png', watermarker=None, left_bottom_text=None, right_bottom_text=None):
     global text_render_font
 
     labels = find_labels(post['text'])
@@ -174,7 +174,7 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
     # 计算并分割
     final_lines = []
 
-    text_width = 475
+    text_width = 545
     for line in lines:
         # 如果长了就分割
         line_width = text_render_font.getlength(line)
@@ -203,10 +203,32 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
                     break
                 else:
                     continue
-
-    # 渲染文字
-    img = Image.new('RGBA', (680, max(280, len(final_lines) * 35 + 210)), (255, 255, 255, 255))
+    # 准备画布
+    img = Image.new('RGBA', (750, max(280, len(final_lines) * 35 + 210)), (255, 255, 255, 255))
     draw = ImageDraw.Draw(img, mode='RGBA')
+
+    # 打平台水印
+    if watermarker is not None and watermarker != '':
+        marker_size = (250, 250)
+
+        marker = Image.open(watermarker, mode='r').convert('RGBA')
+        marker = marker.resize(marker_size)
+
+        for i in range(marker_size[0]):
+            for j in range(marker_size[1]):
+                p = marker.getpixel((i, j))
+                p = p[:-1] + (100,)
+                marker.putpixel((i, j), p)
+        # 圆角蒙版
+        mask = Image.new('RGBA', marker_size, color=(255, 255, 255, 0))
+        # 画一个圆
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.ellipse((0, 0, marker_size[0], marker_size[1]), fill=(255, 255, 255, 30))
+
+        masked = Image.new("RGBA", marker_size, color=(255, 255, 255, 0))
+        masked.paste(marker, box=(0, 0))
+
+        img.paste(masked, box=(img.size[0] - 150, img.size[1]-150), mask=mask)
 
     # 头像
     show_avatar_path = ''
@@ -288,13 +310,13 @@ def render_text_image(post, path='cache/text.png', left_bottom_text=None, right_
 
     # 绘制角落
     if left_bottom_text is None:
-        left_bottom_text = ('匿名用户' if post['anonymous'] else nick_name) + " 发表于 " + (
+        left_bottom_text = ('匿名用户' if post['anonymous'] else post['qq']) + " 发表于 " + (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(post['timestamp'])))
     if right_bottom_text is None:
         right_bottom_text = "开发 @RockChinQ | @Soulter"
 
     draw.text((25, img.size[1] - 25), left_bottom_text, fill=(130, 130, 130), font=comment_text)
-    draw.text((465, img.size[1] - 25), right_bottom_text, fill=(130, 130, 130), font=comment_text)
+    draw.text((535, img.size[1] - 25), right_bottom_text, fill=(130, 130, 130), font=comment_text)
 
     img.save(path)
 
@@ -307,13 +329,17 @@ class EmotionPublisher:
     app_secret = ''
     access_token = ''
 
+    watermarker = ''
+
     access_token_getting_thread = None
 
-    def __init__(self, env_id, app_id, app_secret):
+    def __init__(self, env_id, app_id, app_secret, watermarker=''):
         global inst
         self.env_id = env_id
         self.app_id = app_id
         self.app_secret = app_secret
+
+        self.watermarker = watermarker
 
         inst = self
 
@@ -350,7 +376,7 @@ class EmotionPublisher:
         global text_render_font
 
         # 渲染文字
-        text_image_path = render_text_image(post)
+        text_image_path = render_text_image(post, watermarker=self.watermarker)
 
         # 包装发表文字
 
@@ -418,16 +444,17 @@ def get_inst() -> EmotionPublisher:
 
 if __name__ == '__main__':
     # text = "😀😁😂🤣😃😄😅😆😉😊😋😎😍😘🥰😗😙🥲😚🙂🤗🤩🤔🤨😐😑😶🌫😏😣😥😮🤐😯😪😫🥱😴😌😛😜😝🤤😒😓😔😕🙃🤑😲🙁😞😟😤😢😭😦😧😨😩🤯😬😮💨😰😱🥵🥶😳🤪😵😵💫🥴😠😡🤬😷🤒🤕🤢🤮🤧😇🥳🥸🥺🤠🤡🤥🤫🤭🧐🤓"
-    text = "🧔🤴👳🎋🎃🎈🧨✨🎉🎉🎉🎉🎉🪢🪢🥼🥼🥽🥽🖼🖼🎨🎨🧵🎖🥇🥈🥉🏅🎲🍔🍕🍗🍖🥡🥠🍘"
+    text = "🐢🐢🐢🧔🤴👳🎋🎃🎈🧨✨🎉🎉🎉🎉🎉🪢🪢🥼🥼🥽🥽🖼🖼🎨🎨🧵🎖🥇🥈🥉🏅🎲🍔🍕🍗🍖🥡🥠🍘"
     render_text_image({
         "result": "success",
         "id": 764,
         "openid": "",
-        "qq": "",
+        "qq": "1010553892",
         "timestamp": 1648184113,
         "text": text,
         "media": "[]",
-        "anonymous": 1,
+        "anonymous": 0,
         "status": "通过",
         "review": "拒绝:测试"
-    }, path='text.png')
+    }, path='text.png',
+        watermarker='cache/watermarker.jpg')

@@ -102,5 +102,5 @@ def get_inst() -> QzoneLoginManager:
 if __name__ == '__main__':
     qzlmgr = QzoneLoginManager()
 
-    print(qzlmgr.login_via_qrcode(callback))
-    # print(qzlmgr.getptqrtoken("rockchin"))
+    # print(qzlmgr.login_via_qrcode(callback))
+    print(qzlmgr.getptqrtoken("rockchin"))
