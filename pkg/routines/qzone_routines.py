@@ -5,6 +5,7 @@ import time
 import pkg.chat.manager
 import pkg.database.database
 import pkg.qzone.publisher
+import pkg.qzone.model
 import pkg.routines.post_routines
 
 from mirai import Image
@@ -27,6 +28,13 @@ def clean_pending_posts(interval_seconds=10):
         mutex.acquire()
         db_inst = pkg.database.database.get_inst()
         posts_data = db_inst.pull_posts(status='通过')
+
+        if len(posts_data['posts'])>0:
+            # 检查qzone_token是否可用
+            if pkg.qzone.model.get_inst().qzone_token=="" or 'invalidated':
+                pkg.chat.manager.get_inst().send_message_to_admins("无可用qzone_token,请先刷新cookie后重试")
+                return
+
         for post in posts_data['posts']:
             # print("正在发送",post)
             try:

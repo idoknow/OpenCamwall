@@ -139,6 +139,7 @@ class QzoneOperator:
                 if response.status_code == 200:
                     tokens = re.findall(r'window.g_qzonetoken.*try{return "(.*?)";} catch\(e\)', response.text)
                     if len(tokens) > 0:
+                        # 刷新成功
                         self.qzone_token = tokens[0]
                         return i + 1
             except Exception as e:
@@ -200,6 +201,9 @@ class QzoneOperator:
         # 检查qzone_token是否存在
         if self.qzone_token == "":
             self.refresh_qzone_token(attempt=10)
+
+        if self.qzone_token == 'invalidated':
+            raise Exception("qzone_token已失效")
 
         base64_images = images
 
@@ -264,6 +268,9 @@ class QzoneOperator:
         # 检查qzone_token是否存在
         if self.qzone_token == "":
             self.refresh_qzone_token(attempt=10)
+
+        if self.qzone_token == 'invalidated':
+            raise Exception("qzone_token已失效")
 
         self.headers['referer'] = 'https://user.qzone.qq.com/' + str(self.uin)
         self.headers['origin'] = 'https://user.qzone.qq.com'
