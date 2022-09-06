@@ -40,10 +40,10 @@
 
 ## 效果预览
 
-![稿件文字渲染](docs/res/render.jpg '稿件文字渲染')
-![稿件文字渲染(匿名)](docs/res/render_anonymous.jpg '稿件文字渲染(匿名)')
-![发表说说](docs/res/emotion.jpg '发表说说')
-![发表说说(带图)](docs/res/emotion_image.jpg '发表说说(带图)')
+<img alt="稿件文字渲染" src="docs/res/render.jpg" title="&#39;稿件文字渲染&#39;" width="200"/>
+<img alt="稿件文字渲染(匿名)" src="docs/res/render_anonymous.jpg" title="&#39;稿件文字渲染(匿名)&#39;" width="200"/>
+<img alt="发表说说" src="docs/res/emotion.jpg" title="&#39;发表说说&#39;" width="200"/>
+<img alt="发表说说(带图)" src="docs/res/emotion_image.jpg" title="&#39;发表说说(带图)&#39;" width="200"/>
 
 ## 依赖
 
