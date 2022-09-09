@@ -174,7 +174,7 @@ def render_text_image(post, path='cache/text.png', watermarker=None, left_bottom
     # 计算并分割
     final_lines = []
 
-    text_width = 545
+    text_width = 525
     for line in lines:
         # 如果长了就分割
         line_width = text_render_font.getlength(line)
@@ -223,7 +223,7 @@ def render_text_image(post, path='cache/text.png', watermarker=None, left_bottom
         mask = Image.new('RGBA', marker_size, color=(255, 255, 255, 0))
         # 画一个圆
         mask_draw = ImageDraw.Draw(mask)
-        mask_draw.ellipse((0, 0, marker_size[0], marker_size[1]), fill=(255, 255, 255, 30))
+        mask_draw.ellipse((0, 0, marker_size[0], marker_size[1]), fill=(255, 255, 255, 45))
 
         masked = Image.new("RGBA", marker_size, color=(255, 255, 255, 0))
         masked.paste(marker, box=(0, 0))
