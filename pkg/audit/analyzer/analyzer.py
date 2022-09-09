@@ -107,7 +107,7 @@ def analyze_history_emo_posted():
             now = int(time.time())
             pkg.database.database.get_inst().cursor.execute(
                 "select `pid`,`timestamp` from `emotions` where `timestamp` >={}".format(
-                    now - now % 86400 - (86400 * 100) - 8 * 3600))
+                    now - now % 86400 - (86400 * 15) - 8 * 3600))
 
             data = []
             while True:
