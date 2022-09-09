@@ -54,7 +54,7 @@ def analyze_history_heat_rate_and_heat():
 
             # 记录per hour和heat
             if (event["timestamp"] - last_heat_recorded_timestamp >= 3600 or last_heat_recorded_timestamp == 0) and (
-                    event['timestamp'] >= (now - now % 86400 - (86400 * 100) - 8 * 3600)):
+                    event['timestamp'] >= (now - now % 86400 - (86400 * 15) - 8 * 3600)):
                 data_heat.append([event['timestamp'] * 1000, jsonobj["total_amount"]])
 
                 if last_recorded_heat != 0:
