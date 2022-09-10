@@ -29,9 +29,9 @@ def clean_pending_posts(interval_seconds=10):
         db_inst = pkg.database.database.get_inst()
         posts_data = db_inst.pull_posts(status='通过')
 
-        if len(posts_data['posts'])>0:
+        if len(posts_data['posts']) > 0:
             # 检查qzone_token是否可用
-            if pkg.qzone.model.get_inst().qzone_token=="" or 'invalidated':
+            if pkg.qzone.model.get_inst().qzone_token == "" or pkg.qzone.model.get_inst().qzone_token == 'invalidated':
                 pkg.chat.manager.get_inst().send_message_to_admins("无可用qzone_token,请先刷新cookie后重试")
                 return
 
