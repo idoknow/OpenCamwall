@@ -307,39 +307,6 @@ if __name__ == '__main__':
     ))
     logging.getLogger().addHandler(sh)
 
-    # logger = logging.getLogger('cw')
-    #
-    # fh = logging.FileHandler(filename='camwall.log', mode='a', encoding='utf8')
-    #
-    # fh_formatter = file_formatter = logging.Formatter(
-    #     fmt="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s (%(lineno)s) - %(message)s",
-    #     datefmt="%Y-%m-%d %H:%M:%S"
-    # )
-    # fh.setFormatter(fh_formatter)
-    # fh.setLevel(config.logging_level)
-    #
-    # sh = logging.StreamHandler()
-    #
-    # sh_formatter = colorlog.ColoredFormatter(
-    #     fmt="%(asctime)s - %(name)s - %(levelname)-9s - %(filename)-8s (%(lineno)s) - %(message)s",
-    #     datefmt="%Y-%m-%d %H:%M:%S",
-    #     log_colors={
-    #         'DEBUG': 'white',  # cyan white
-    #         'INFO': 'red',
-    #         'WARNING': 'yellow',
-    #         'ERROR': 'red',
-    #         'CRITICAL': 'bold_red',
-    #     }
-    # )
-    # sh.setFormatter(sh_formatter)
-    # sh.setLevel(config.logging_level)
-    #
-    # logger.addHandler(fh)
-    # logger.addHandler(sh)
-    # logger.setLevel(config.logging_level)
-    #
-    # logger.info("正在执行启动流程...")
-
     main()
 
     while True:

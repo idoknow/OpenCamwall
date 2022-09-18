@@ -17,34 +17,45 @@ from pkg.database.database import MySQLConnection
 
 inst = None
 
+updating = False
+
 
 def update_cookie_workflow():
-    chat_bot = pkg.chat.manager.get_inst()
+    global updating
+    if updating:
+        return
 
-    # 向管理员发送QQ空间登录二维码
-    qzone_login = pkg.qzone.login.QzoneLoginManager()
-    cookies = qzone_login.login_via_qrcode(
-        qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
+    updating = True
 
-    cookie_str = ""
+    try:
+        chat_bot = pkg.chat.manager.get_inst()
 
-    for k in cookies:
-        cookie_str += "{}={};".format(k, cookies[k])
+        # 向管理员发送QQ空间登录二维码
+        qzone_login = pkg.qzone.login.QzoneLoginManager()
+        cookies = qzone_login.login_via_qrcode(
+            qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
 
-    qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
-                                               cookie_str)
+        cookie_str = ""
 
-    chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
-    logging.info("已通过二维码登录QQ空间")
+        for k in cookies:
+            cookie_str += "{}={};".format(k, cookies[k])
 
-    # 把cookie写进config.py
-    config_file = open('config.py', encoding='utf-8', mode='r+')
-    config_str = config_file.read()
-    config_str = re.sub(r'qzone_cookie = .*', 'qzone_cookie = \'{}\''.format(cookie_str), config_str)
+        qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
+                                                   cookie_str)
 
-    config_file.seek(0)
-    config_file.write(config_str)
-    config_file.close()
+        chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
+        logging.info("已通过二维码登录QQ空间")
+
+        # 把cookie写进config.py
+        config_file = open('config.py', encoding='utf-8', mode='r+')
+        config_str = config_file.read()
+        config_str = re.sub(r'qzone_cookie = .*', 'qzone_cookie = \'{}\''.format(cookie_str), config_str)
+
+        config_file.seek(0)
+        config_file.write(config_str)
+        config_file.close()
+    finally:
+        updating = False
 
 
 class ChatBot:

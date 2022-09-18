@@ -33,6 +33,13 @@ def generate_gtk(skey):
 
 def get_picbo_and_richval(upload_result):
     json_data = upload_result
+
+    # for debug
+    if 'ret' not in json_data:
+        logging.info(json_data)
+        raise Exception("获取图片picbo和richval失败")
+    # end
+
     if json_data['ret'] != 0:
         raise Exception("上传图片失败")
     picbo_spt = json_data['data']['url'].split('&bo=')
@@ -120,6 +127,7 @@ class QzoneOperator:
                 return
             try:
                 self.refresh_qzone_token(attempt=10)
+                logging.info("刷新qzone_token成功:"+self.qzone_token)
             except RefreshQzoneTokenException:
                 self.keepalive_proxy_thread = None
                 return
