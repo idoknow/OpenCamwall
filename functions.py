@@ -17,7 +17,7 @@ function_switches = {
     'audit_recorder_liker': True,  # 记录器:说说点赞
     'chat': True,  # 消息机器人
     'chat_greeting': True,  # 消息机器人:问候
-    'qzone': True,  # QQ空间
+    'qzone': True,  # 初始化QQ空间
     'qzone_token_keepalive': True,  # QQ空间:token保活
     'qzone_publisher': True,  # QQ空间:进行说说发表器的初始化
     'qzone_publisher_wx_access_token_keepalive': True,  # QQ空间:说说发表:微信access token保活
@@ -37,8 +37,8 @@ function_switches = {
     'restful_route_user_feedback': True,  # RESTful API:接口:用户反馈
     'restful_route_fetch_uniauth_info': True,  # RESTful API:接口:获取统一认证账户信息
     'restful_route_change_password': True,  # RESTful API:接口:修改统一账户密码
-    'restful_get_login_salt': True,  # RESTful API:接口:获取统一账户登录加密salt
-    'restful_verify_account': True,  # RESTful API:接口:验证统一账户
+    'restful_route_get_login_salt': True,  # RESTful API:接口:获取统一账户登录加密salt
+    'restful_route_verify_account': True,  # RESTful API:接口:验证统一账户
     'routine_feedback_send_to_admins': True,  # RESTful API:接口:发送反馈到管理员
     'routine_post_send_to_admins': True,  # RESTful API:接口:发送稿件到管理员
     'routine_post_post_finished': True,  # RESTful API:接口:稿件投递完成的事务
