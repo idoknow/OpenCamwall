@@ -1,3 +1,9 @@
+# 以下是系统中部分常用功能的开关
+# 此文件暂不支持热更新
+# 若设置为False,则此功能在被调用时会直接返回,不抛出异常
+# 若notif_of_use_of_disabled_func为True
+# 那么将以info级别提示此功能被调用
+# 所有功能(除了notif_of_use_of_disabled_func)的默认值均为True
 function_switches = {
     'all': True,  # 所有功能
     'notif_of_use_of_disabled_func': True,  # 通知使用了被禁用的功能
