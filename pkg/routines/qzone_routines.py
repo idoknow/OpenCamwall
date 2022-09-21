@@ -35,14 +35,6 @@ def clean_pending_posts(interval_seconds=10):
                 pkg.chat.manager.get_inst().send_message_to_admins("[bot]无可用qzone_token,请先刷新cookie后重试")
                 return
 
-        try:
-            pkg.qzone.publisher.get_inst().refresh_access_token()
-        except Exception as e:
-            logging.error("刷新小程序储存access_token失败")
-            logging.exception(e)
-            pkg.chat.manager.get_inst().send_message_to_admins(["[bot]刷新小程序储存access_token失败"])
-            raise e
-
         for post in posts_data['posts']:
             # print("正在发送",post)
             try:
