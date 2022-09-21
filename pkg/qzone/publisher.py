@@ -343,12 +343,6 @@ class EmotionPublisher:
 
         inst = self
 
-        self.refresh_access_token()
-
-        self.access_token_getting_thread = threading.Thread(target=self.get_access_token_loop, args=(), daemon=True)
-
-        self.access_token_getting_thread.start()
-
     def get_access_token_loop(self):
         while True:
             time.sleep(1800)
