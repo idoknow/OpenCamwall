@@ -228,7 +228,7 @@ def render_text_image(post, path='cache/text.png', watermarker=None, left_bottom
         masked = Image.new("RGBA", marker_size, color=(255, 255, 255, 0))
         masked.paste(marker, box=(0, 0))
 
-        img.paste(masked, box=(img.size[0] - 150, img.size[1]-150), mask=mask)
+        img.paste(masked, box=(img.size[0] - 150, img.size[1] - 150), mask=mask)
 
     # 头像
     show_avatar_path = ''
@@ -328,6 +328,7 @@ class EmotionPublisher:
     app_id = ''
     app_secret = ''
     access_token = ''
+    token_refresh_timestamp = 0
 
     watermarker = ''
 
@@ -360,6 +361,7 @@ class EmotionPublisher:
                 res = requests.get(url)
                 resjson = json.loads(res.text)
                 self.access_token = resjson["access_token"]
+                self.token_refresh_timestamp = int(time.time())
                 return
             except Exception as e:
                 if i == attempts - 1:
@@ -403,6 +405,16 @@ class EmotionPublisher:
                 os.mkdir(path)
             except Exception:
                 pass
+
+            if int(time.time()) - self.token_refresh_timestamp >= 3600:
+                try:
+                    pkg.qzone.publisher.get_inst().refresh_access_token()
+                except Exception as e:
+                    logging.error("刷新小程序储存access_token失败")
+                    logging.exception(e)
+                    pkg.chat.manager.get_inst().send_message_to_admins(["[bot]刷新小程序储存access_token失败"])
+                    raise e
+
             url = "https://api.weixin.qq.com/tcb/batchdownloadfile?access_token=" + self.access_token
             data = '''{
                 "env":"''' + self.env_id + '''",
