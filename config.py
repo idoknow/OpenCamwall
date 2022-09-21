@@ -5,6 +5,9 @@ import logging
 # 务必与Mirai-console登录的QQ一致
 qq_bot_uin = 0
 
+# mirai-http的地址
+mirai_http_host = 'localhost'
+
 # mirai-http的verifykey
 mirai_http_verify_key = 'yirimirai'
 
@@ -47,7 +50,8 @@ api_port = 8989
 # RESTful API 域名
 # 此字段并不是必须的,如果不填写,将使用http协议进行监听
 # 填写之后,启动时将认证证书是否匹配
-api_domain = 'localhost'
+# 注意:如果需要使用http协议而不是https,请删除此字符串默认内容
+api_domain = 'test.host'
 
 # RESTful API SSL 证书路径
 api_ssl_context = (
