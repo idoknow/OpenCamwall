@@ -60,6 +60,7 @@ def update_cookie_workflow():
 
 class ChatBot:
     uin = 0
+    mirai_host = ''
     verify_key = ''
     bot = None
     auto_reply_message = ''
@@ -69,10 +70,11 @@ class ChatBot:
 
     db = None
 
-    def __init__(self, uin: int, verify_key: str, auto_reply_message: str, qrcode_path: str,
+    def __init__(self, uin: int, mirai_host: str, verify_key: str, auto_reply_message: str, qrcode_path: str,
                  admin_uins: set, admin_groups: set, db_mgr: MySQLConnection):
         global inst
         self.uin = uin
+        self.mirai_host = mirai_host
         self.verify_key = verify_key
         self.auto_reply_message = auto_reply_message
         self.qrcode_path = qrcode_path
@@ -85,7 +87,7 @@ class ChatBot:
             qq=uin,
             adapter=WebSocketAdapter(
                 verify_key=verify_key,
-                host='localhost',
+                host=mirai_host,
                 port=8080
             )
         )

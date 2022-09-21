@@ -38,6 +38,7 @@ def main():
 
     # 自动回复机器人
     chat_bot = pkg.chat.manager.ChatBot(config.qq_bot_uin,
+                                        config.mirai_http_host,
                                         config.mirai_http_verify_key,
                                         config.auto_reply_message,
                                         config.qrcode_path,
