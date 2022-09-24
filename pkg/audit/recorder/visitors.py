@@ -70,8 +70,9 @@ def initialize_visitor_recorder():
         lsjson = pkg.database.database.get_inst().cursor.fetchone()
     finally:
         pkg.database.database.get_inst().release()
-    obj = json.loads(lsjson[0])
-    last_record_total = obj["total_amount"]
+    if lsjson is not None and len(lsjson) > 0:
+        obj = json.loads(lsjson[0])
+        last_record_total = obj["total_amount"]
     visitor_observer_loop()
 
 
