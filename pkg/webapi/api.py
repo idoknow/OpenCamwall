@@ -188,6 +188,17 @@ class RESTfulAPI:
                 logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
+        @app.route('/stuwork/submit_ticket', methods=['GET'])
+        def stuwork_submit_ticket():
+            try:
+                result = self.db_mgr.submit_ticket(request.args['title'], request.args['openid'],
+                                                   request.args['contact'],
+                                                   request.args['content'], request.args['media'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
         self.app = app
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"
@@ -204,7 +215,7 @@ class RESTfulAPI:
         # self.proxy_thread.start()
 
     def run_api(self):
-        if self.domain != '' and self.ssl_context != None:
+        if self.domain != '' and self.ssl_context is not None:
             self.app.config['SERVER_NAME'] = self.domain
             self.app.run(host=self.host, port=self.port, ssl_context=self.ssl_context)
         else:

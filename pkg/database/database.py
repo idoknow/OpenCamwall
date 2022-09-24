@@ -662,6 +662,35 @@ class MySQLConnection:
 
         return result
 
+    def submit_ticket(self, title, openid, contact, content, media):
+        result = {
+            'result': 'success',
+            'id': 0
+        }
+
+        self.acquire()
+        try:
+            self.ensure_connection()
+            sql = "insert into `stu_work_tickets`(`timestamp`,`launcher`,`title`,`contact`,`content`,`media`)" \
+                  " values ({},'{}','{}','{}','{}','{}')".format(int(time.time()),
+                                                                 escape_string(openid),
+                                                                 escape_string(title),
+                                                                 escape_string(contact),
+                                                                 escape_string(content),
+                                                                 media)
+            self.cursor.execute(sql)
+
+            sql = "select id from `stu_work_tickets` where `launcher` = '{}' order by id desc limit 1" \
+                .format(escape_string(openid))
+
+            self.cursor.execute(sql)
+            row = self.cursor.fetchone()
+            result['id'] = row[0]
+        finally:
+            self.release()
+
+        return result
+
 
 def get_inst() -> MySQLConnection:
     global inst
