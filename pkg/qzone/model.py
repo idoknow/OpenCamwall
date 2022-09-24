@@ -121,15 +121,17 @@ class QzoneOperator:
     def __keepalive(self):
         global inst
         while True:
-            if inst != self:
-                return  # 如果不是当前实例，则退出
+            if inst != self:  # 如果不是当前实例，则退出
+                return
             if self.qzone_token == 'invalidated':
                 return
             try:
                 self.refresh_qzone_token(attempt=10)
-                logging.info("刷新qzone_token成功:"+self.qzone_token)
-            except RefreshQzoneTokenException:
+                logging.info("刷新qzone_token成功:" + self.qzone_token)
+            except RefreshQzoneTokenException as e:
                 self.keepalive_proxy_thread = None
+                logging.info("刷新qzone_token失败:qzone_token=", self.qzone_token)
+                logging.exception(e)
                 return
             time.sleep(600)
 
@@ -152,9 +154,16 @@ class QzoneOperator:
                         return i + 1
             except Exception as e:
                 continue
-        self.cookie_invalidated_callback()
+
         self.qzone_token = 'invalidated'
+
+        thr = threading.Thread(target=self.cookie_invalidated_callback, args=(), daemon=True)
+        thr.start()
+
         raise RefreshQzoneTokenException("刷新qzone_token失败")
+
+    def qzone_token_valid(self):
+        return self.qzone_token != 'invalidated' and self.qzone_token != ''
 
     def upload_image_file(self, file_path):
         b64 = image_base64(file_path)
@@ -207,11 +216,8 @@ class QzoneOperator:
             images = []
 
         # 检查qzone_token是否存在
-        if self.qzone_token == "":
-            self.refresh_qzone_token(attempt=10)
-
-        if self.qzone_token == 'invalidated':
-            raise Exception("qzone_token已失效")
+        if not self.qzone_token_valid():
+            raise Exception("无有效qzone_token")
 
         base64_images = images
 
@@ -274,11 +280,8 @@ class QzoneOperator:
         """
 
         # 检查qzone_token是否存在
-        if self.qzone_token == "":
-            self.refresh_qzone_token(attempt=10)
-
-        if self.qzone_token == 'invalidated':
-            raise Exception("qzone_token已失效")
+        if not self.qzone_token_valid():
+            raise Exception("无有效qzone_token")
 
         self.headers['referer'] = 'https://user.qzone.qq.com/' + str(self.uin)
         self.headers['origin'] = 'https://user.qzone.qq.com'
@@ -320,12 +323,16 @@ class QzoneOperator:
         json_text = res.text.replace("_Callback(", '')[:-3]
         # print(json_text)
 
-        json_obj = json.loads(json_text)
-        visit_count = json_obj['data']
-        return {
-            'today': visit_count['todaycount'],
-            'total': visit_count['totalcount'],
-        }
+        try:
+            json_obj = json.loads(json_text)
+            visit_count = json_obj['data']
+            return {
+                'today': visit_count['todaycount'],
+                'total': visit_count['totalcount'],
+            }
+        except Exception as e:
+            print(json_text)  # for debug
+            raise e
 
     def get_emotion_list(self, num=10):
         res = requests.get(
