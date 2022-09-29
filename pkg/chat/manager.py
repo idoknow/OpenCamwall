@@ -41,7 +41,8 @@ def update_cookie_workflow():
             cookie_str += "{}={};".format(k, cookies[k])
 
         qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
-                                                   cookie_str)
+                                                   cookie_str, cookie_invalidated_callback=pkg.routines.qzone_routines
+                                                   .qzone_cookie_invalidated_callback)
 
         chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
         logging.info("已通过二维码登录QQ空间")

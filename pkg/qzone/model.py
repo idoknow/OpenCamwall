@@ -129,10 +129,16 @@ class QzoneOperator:
                 self.refresh_qzone_token(attempt=10)
                 logging.info("刷新qzone_token成功:" + self.qzone_token)
             except RefreshQzoneTokenException as e:
-                self.keepalive_proxy_thread = None
+                print("刷新qzone_token失败:qzone_token=", self.qzone_token)
                 logging.info("刷新qzone_token失败:qzone_token=", self.qzone_token)
                 logging.exception(e)
+
+                thr = threading.Thread(target=self.cookie_invalidated_callback, args=(), daemon=True)
+                thr.start()
+
+                self.keepalive_proxy_thread = None
                 return
+
             time.sleep(600)
 
     def refresh_qzone_token(self, attempt=1):
@@ -145,7 +151,8 @@ class QzoneOperator:
                 response = requests.get(
                     url="https://h5.qzone.qq.com/feeds/inpcqq",
                     params={"uin": self.uin, "qqver": 5749, "timestamp": int(datetime.now().timestamp() * 1000)},
-                    headers=self.headers, cookies=self.cookie_dict)
+                    headers=self.headers, cookies=self.cookie_dict,
+                    timeout=10)
                 if response.status_code == 200:
                     tokens = re.findall(r'window.g_qzonetoken.*try{return "(.*?)";} catch\(e\)', response.text)
                     if len(tokens) > 0:
@@ -156,9 +163,6 @@ class QzoneOperator:
                 continue
 
         self.qzone_token = 'invalidated'
-
-        thr = threading.Thread(target=self.cookie_invalidated_callback, args=(), daemon=True)
-        thr.start()
 
         raise RefreshQzoneTokenException("刷新qzone_token失败")
 

@@ -11,6 +11,11 @@ import pkg.routines.post_routines
 from mirai import Image
 
 
+def qzone_cookie_invalidated_callback():
+    chat_bot = pkg.chat.manager.get_inst()
+    chat_bot.send_message_to_admins(["[bot]qzone_token刷新失败,cookie可能已经失效,回复'更新cookie'进行重新登录"])
+
+
 def login_via_qrcode_callback(path):
     chat_inst = pkg.chat.manager.get_inst()
     chat_inst.send_message_to_admins([
