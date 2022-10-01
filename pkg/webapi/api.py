@@ -199,6 +199,17 @@ class RESTfulAPI:
                 logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
+        @app.route('/stuwork/pull_multi_tickets', methods=['GET'])
+        def stuwork_pull_multi_tickets():
+            try:
+                result = self.db_mgr.pull_multi_tickets(int(request.args['capacity']), int(request.args['page']),
+                                                        request.args['start'], request.args['end'],
+                                                        request.args['orderby'], request.args['openid'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
         self.app = app
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"

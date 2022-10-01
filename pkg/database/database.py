@@ -691,6 +691,87 @@ class MySQLConnection:
 
         return result
 
+    pull_tickets_order_sql = """
+        select {},ifNull(f_amt,0) famt,if((select openid a 
+                                            from `stu_work_follow_relationships` 
+                                            where `target`=f_target and openid='{}' 
+                                            limit 1) 
+                                            is null,0,1) followed
+        from (select *
+            from (select target f_target,count(*) f_amt
+                    from `stu_work_follow_relationships`
+			        group by `target`) relationship
+	        right join (select *
+			            from `stu_work_tickets`
+				        where `timestamp` >= {} and `timestamp` <= {}) tickets
+	        on tickets.id=relationship.f_target) result
+        order by {} desc
+    """
+
+    def pull_multi_tickets(self, capacity, page, start, end, orderby, openid):
+        result = {
+            'result': 'success',
+            'page_list': [1],
+            'page': 1,
+            'eligible': 0,
+            'orderby': orderby,
+            'data': []
+        }
+
+        self.acquire()
+
+        try:
+            self.ensure_connection()
+
+            if orderby == 'heat':
+                orderby = 'famt'
+            else:
+                orderby = 'id'
+
+            # 获取符合条件的数量
+            self.cursor.execute(self.pull_tickets_order_sql.format("count(*) eligible", openid, start, end, orderby))
+            row = self.cursor.fetchone()
+
+            eligible = row[0]
+
+            result['eligible'] = eligible
+
+            # 计算数据起点
+            page_amt = int(eligible / capacity) if eligible % capacity == 0 else int(eligible / capacity) + 1
+
+            result['page_list'] = [i for i in range(1, page_amt + 1)]
+
+            if page >= page_amt:
+                page = page_amt
+
+            result['page'] = page
+
+            self.cursor.execute(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
+            print(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
+            rows = self.cursor.fetchall()
+
+            data = []
+
+            for row in rows:
+                data.append({
+                    'id': row[2],
+                    'timestamp': row[3],
+                    'launcher': row[4],
+                    'title': row[5],
+                    'contact': row[6],
+                    'content': row[7],
+                    'media': row[8],
+                    'status': row[9],
+                    'famt': row[10],
+                    'followed': row[11]
+                })
+
+            result['data'] = data
+
+            return result
+        finally:
+            self.release()
+
 
 def get_inst() -> MySQLConnection:
     global inst

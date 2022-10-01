@@ -308,4 +308,8 @@ if __name__ == '__main__':
     main()
 
     while True:
-        time.sleep(86400)
+        try:
+            time.sleep(86400)
+        except KeyboardInterrupt:
+            logging.info("程序退出")
+            break
