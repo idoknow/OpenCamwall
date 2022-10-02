@@ -749,6 +749,9 @@ class MySQLConnection:
             if page >= page_amt:
                 page = page_amt
 
+            if page <= 0:
+                page = 1
+
             result['page'] = page
 
             self.cursor.execute(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
