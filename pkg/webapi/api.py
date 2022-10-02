@@ -210,6 +210,33 @@ class RESTfulAPI:
                 logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
+        @app.route('/stuwork/follow_ticket', methods=['GET'])
+        def stuwork_follow_ticket():
+            try:
+                result = self.db_mgr.follow_ticket(request.args['openid'], request.args['target'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
+        @app.route('/stuwork/unfollow_ticket', methods=['GET'])
+        def stuwork_unfollow_ticket():
+            try:
+                result = self.db_mgr.unfollow_ticket(request.args['openid'], request.args['target'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
+        @app.route('/stuwork/get_ticket_follower_amt', methods=['GET'])
+        def stuwork_get_ticket_follower_amt():
+            try:
+                result = self.db_mgr.get_ticket_follower_amt(request.args['target'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
         self.app = app
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"

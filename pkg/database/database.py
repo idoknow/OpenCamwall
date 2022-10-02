@@ -692,11 +692,16 @@ class MySQLConnection:
         return result
 
     pull_tickets_order_sql = """
-        select {},ifNull(f_amt,0) famt,if((select openid a 
-                                            from `stu_work_follow_relationships` 
-                                            where `target`=f_target and openid='{}' 
-                                            limit 1) 
-                                            is null,0,1) followed
+        select {},
+                ifNull(f_amt,0) famt,
+                if((select openid a 
+                    from `stu_work_follow_relationships` 
+                    where `target`=f_target and openid='{}' 
+                    limit 1) 
+                    is null,0,1) followed,
+                (select count(*) 
+                from `stu_work_replies` 
+                where `target`=f_target) ramt
         from (select *
             from (select target f_target,count(*) f_amt
                     from `stu_work_follow_relationships`
@@ -747,7 +752,7 @@ class MySQLConnection:
             result['page'] = page
 
             self.cursor.execute(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
-            print(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
+            # print(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
             rows = self.cursor.fetchall()
 
             data = []
@@ -763,7 +768,8 @@ class MySQLConnection:
                     'media': row[8],
                     'status': row[9],
                     'famt': row[10],
-                    'followed': row[11]
+                    'followed': row[11],
+                    'ramt': row[12]
                 })
 
             result['data'] = data
@@ -772,6 +778,57 @@ class MySQLConnection:
         finally:
             self.release()
 
+    def follow_ticket(self, openid, target):
+        result = {
+            'result': 'success'
+        }
+
+        self.acquire()
+
+        try:
+            self.ensure_connection()
+            sql = "insert into `stu_work_follow_relationships`(`timestamp`, `openid`,`target`) values ({},'{}',{})".format(int(time.time()), escape_string(openid), target)
+            self.cursor.execute(sql)
+        finally:
+            self.release()
+
+        return result
+
+    def unfollow_ticket(self, openid, target):
+        result = {
+            'result': 'success'
+        }
+
+        self.acquire()
+
+        try:
+            self.ensure_connection()
+            sql = "delete from `stu_work_follow_relationships` where `openid`='{}' and `target`={}"\
+                .format(escape_string(openid), target)
+            self.cursor.execute(sql)
+        finally:
+            self.release()
+
+        return result
+
+    def get_ticket_follower_amt(self, target):
+        result = {
+            'result': 'success',
+            'amt': 0
+        }
+
+        self.acquire()
+
+        try:
+            self.ensure_connection()
+            sql = "select count(*) amt from `stu_work_follow_relationships` where `target`={}".format(target)
+            self.cursor.execute(sql)
+            row = self.cursor.fetchone()
+            result['amt'] = row[0]
+        finally:
+            self.release()
+
+        return result
 
 def get_inst() -> MySQLConnection:
     global inst
