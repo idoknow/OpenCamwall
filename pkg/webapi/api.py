@@ -237,6 +237,26 @@ class RESTfulAPI:
                 logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
+        @app.route('/stuwork/reply_ticket', methods=['GET'])
+        def stuwork_reply_ticket():
+            try:
+                result = self.db_mgr.reply_ticket(request.args['openid'], request.args['nick'],
+                                                  request.args['target'], request.args['content'],
+                                                  request.args['type'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
+        @app.route('/stuwork/fetch_ticket_replies', methods=['GET'])
+        def stuwork_fetch_ticket_replies():
+            try:
+                result = self.db_mgr.fetch_ticket_replies(request.args['target'], request.args['openid'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
         self.app = app
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"

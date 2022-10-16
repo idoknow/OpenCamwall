@@ -705,11 +705,11 @@ class MySQLConnection:
         from (select *
             from (select target f_target,count(*) f_amt
                     from `stu_work_follow_relationships`
-			        group by `target`) relationship
-	        right join (select *
-			            from `stu_work_tickets`
-				        where `timestamp` >= {} and `timestamp` <= {}) tickets
-	        on tickets.id=relationship.f_target) result
+                    group by `target`) relationship
+            right join (select *
+                        from `stu_work_tickets`
+                        where `timestamp` >= {} and `timestamp` <= {}) tickets
+            on tickets.id=relationship.f_target) result
         order by {} desc
     """
 
@@ -754,8 +754,11 @@ class MySQLConnection:
 
             result['page'] = page
 
-            self.cursor.execute(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
-            # print(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((page-1)*capacity, capacity))
+            self.cursor.execute(
+                self.pull_tickets_order_sql.format("*", openid, start, end, orderby) + " limit {},{}".format(
+                    (page - 1) * capacity, capacity))
+            # print(self.pull_tickets_order_sql.format("*", openid, start, end, orderby)+" limit {},{}".format((
+            # page-1)*capacity, capacity))
             rows = self.cursor.fetchall()
 
             data = []
@@ -790,7 +793,8 @@ class MySQLConnection:
 
         try:
             self.ensure_connection()
-            sql = "insert into `stu_work_follow_relationships`(`timestamp`, `openid`,`target`) values ({},'{}',{})".format(int(time.time()), escape_string(openid), target)
+            sql = "insert into `stu_work_follow_relationships`(`timestamp`, `openid`,`target`) values ({},'{}',{})".format(
+                int(time.time()), escape_string(openid), target)
             self.cursor.execute(sql)
         finally:
             self.release()
@@ -806,7 +810,7 @@ class MySQLConnection:
 
         try:
             self.ensure_connection()
-            sql = "delete from `stu_work_follow_relationships` where `openid`='{}' and `target`={}"\
+            sql = "delete from `stu_work_follow_relationships` where `openid`='{}' and `target`={}" \
                 .format(escape_string(openid), target)
             self.cursor.execute(sql)
         finally:
@@ -828,6 +832,62 @@ class MySQLConnection:
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
             result['amt'] = row[0]
+        finally:
+            self.release()
+
+        return result
+
+    def reply_ticket(self, openid, nick, target, content, reply_type):
+        result = {
+            'result': 'success'
+        }
+
+        self.acquire()
+
+        try:
+            self.ensure_connection()
+
+            sql = "insert into `stu_work_replies`(`timestamp`,`openid`,`nick`,`target`,`content`,`type`)" \
+                  " values ({},'{}','{}',{},'{}','{}')".format(int(time.time()), escape_string(openid),
+                                                             escape_string(nick), target, escape_string(content),
+                                                             reply_type)
+            self.cursor.execute(sql)
+        finally:
+            self.release()
+
+        return result
+
+    fetch_reply_sql = """
+        select *,if(`openid`='{}',1,0) mine from `stu_work_replies` where `target`={} order by `id`
+        """
+
+    def fetch_ticket_replies(self, target, openid):
+        result = {
+            'result': 'success',
+            'data': []
+        }
+
+        self.acquire()
+
+        try:
+            self.ensure_connection()
+            self.cursor.execute(self.fetch_reply_sql.format(escape_string(openid), target))
+            rows = self.cursor.fetchall()
+
+            data = []
+
+            for row in rows:
+                data.append({
+                    'id': row[0],
+                    'timestamp': row[1],
+                    'nick': row[2],
+                    'target': row[4],
+                    'content': row[5],
+                    'type': row[6],
+                    'mine': row[7]
+                })
+
+            result['data'] = data
         finally:
             self.release()
 
