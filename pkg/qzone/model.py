@@ -375,6 +375,37 @@ class QzoneOperator:
 
         return json_obj['data'][0]['current']['newdata'].__contains__('LIKE')
 
+    def get_traffic_data(self, tid):
+        """获取点赞量、评论量、转发量"""
+        url = EMOTION_INFO_API.format(int(time.time()), self.uin, tid)
+        # print(url)
+        res = requests.get(url=url)
+        # print(res.text)
+        respobj = json.loads(res.text.replace("_Callback(", "")[:-3])
+        # print(respobj)
+
+        if not respobj['data'][0]['current']['newdata'].__contains__('LIKE'):
+            # raise Exception("tid 无效:",tid)
+            return -1, -1, -1
+
+        # 检查newdata是否完整，不完整则结束跟踪，valid设置为0
+        crt_newdata = dict(respobj["data"][0]["current"]["newdata"])
+        # print(crt_newdata)
+        if crt_newdata.__contains__("LIKE") and crt_newdata.__contains__("PRD") and crt_newdata.__contains__(
+                "CS") and crt_newdata.__contains__("ZS"):  # 点赞，浏览，评论，转发
+            like_amt = 0
+            read_amt = 0
+            comment_amt = 0
+            forward_amt = 0
+
+            like_amt = crt_newdata["LIKE"]
+            read_amt = crt_newdata["PRD"]
+            comment_amt = crt_newdata["CS"]
+            forward_amt = crt_newdata["ZS"]
+
+            return (like_amt, comment_amt, forward_amt)
+
+        return -1, -1, -1
 
 inst = None
 
