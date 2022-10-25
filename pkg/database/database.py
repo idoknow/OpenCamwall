@@ -42,13 +42,19 @@ class MySQLConnection:
     current_salt = ''
     previous_salt = ''
 
-    def __init__(self, host, port, user, password, database, autocommit=True):
+    appid = ''
+    app_secret = ''
+
+    def __init__(self, host, port, user, password, database, appid='', app_secret='', autocommit=True):
         global inst
         self.host = host
         self.port = port
         self.user = user
         self.password = password
         self.database = database
+
+        self.appid = appid
+        self.app_secret = app_secret
 
         inst = self
 
@@ -79,7 +85,7 @@ class MySQLConnection:
             time.sleep(2)
 
     def acquire(self):
-        self.mutex.acquire(timeout=5)
+        self.mutex.acquire(timeout=3)
         if not self.mutex.locked():  # 五秒还没获得锁,大抵又死锁了
             self.mutex.release()
             self.mutex.acquire()
@@ -96,6 +102,31 @@ class MySQLConnection:
 
     def get_current_salt(self):
         return self.current_salt
+
+    wx_code2session_url = 'https://api.weixin.qq.com/sns/jscode2session?appid={}&secret={}&js_code={}&grant_type=authorization_code'
+
+    def get_openid(self, code):
+        result = {
+            'result': 'success',
+            'openid': ''
+        }
+        # 从微信获取openid
+        res = requests.get(self.wx_code2session_url.format(self.appid, self.app_secret, code))
+        # print(res.json())
+        res_json = res.json()
+        if 'errcode' in res_json and res_json['errcode'] != 0:
+            if res_json['errcode'] == 40029:
+                result['result'] = 'code无效'
+            elif res_json['errcode'] == 45011:
+                result['result'] = '请求频繁'
+            elif res_json['errcode'] == 40226:
+                result['result'] = '用户已被系统风控'
+            else:
+                result['result'] = '未知错误'
+            return result
+        else:
+            result['openid'] = res_json['openid']
+            return result
 
     def register(self, openid: str, uin):
 
@@ -849,8 +880,8 @@ class MySQLConnection:
 
             sql = "insert into `stu_work_replies`(`timestamp`,`openid`,`nick`,`target`,`content`,`type`)" \
                   " values ({},'{}','{}',{},'{}','{}')".format(int(time.time()), escape_string(openid),
-                                                             escape_string(nick), target, escape_string(content),
-                                                             reply_type)
+                                                               escape_string(nick), target, escape_string(content),
+                                                               reply_type)
             self.cursor.execute(sql)
         finally:
             self.release()
@@ -892,6 +923,7 @@ class MySQLConnection:
             self.release()
 
         return result
+
 
 def get_inst() -> MySQLConnection:
     global inst

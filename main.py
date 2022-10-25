@@ -29,7 +29,9 @@ def main():
                                                    config.database_context['port'],
                                                    config.database_context['user'],
                                                    config.database_context['password'],
-                                                   config.database_context['db'])
+                                                   config.database_context['db'],
+                                                   appid=config.mini_program_appid,
+                                                   app_secret=config.mini_program_secret)
 
     # 自动回复机器人
     chat_bot = pkg.chat.manager.ChatBot(config.qq_bot_uin,

@@ -99,6 +99,15 @@ class RESTfulAPI:
                 # raise e
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
+        @app.route('/get_openid', methods=['GET'])
+        def get_openid():
+            try:
+                result = self.db_mgr.get_openid(request.args['code'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
         @app.route('/account', methods=['GET'])
         def fetch_accounts():
             try:
