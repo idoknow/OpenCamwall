@@ -159,6 +159,10 @@ class QzoneOperator:
                         # 刷新成功
                         self.qzone_token = tokens[0]
                         return i + 1
+                    else:
+                        logging.debug(response.text)
+                else:
+                    logging.exception("response status code", response.status_code, 'while refreshing qzone token.')
             except Exception as e:
                 continue
 
@@ -406,6 +410,7 @@ class QzoneOperator:
             return (like_amt, comment_amt, forward_amt)
 
         return -1, -1, -1
+
 
 inst = None
 

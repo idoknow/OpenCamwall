@@ -88,11 +88,11 @@ def main():
         for k in cookies:
             cookie_str += "{}={};".format(k, cookies[k])
 
+        print(cookie_str)
         qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
                                                    cookie_str,
                                                    cookie_invalidated_callback=pkg.routines.qzone_routines
                                                    .qzone_cookie_invalidated_callback)
-        print(cookie_str)
         chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
         logging.info("已通过二维码登录QQ空间")
 
