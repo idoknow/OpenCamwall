@@ -176,14 +176,17 @@ def init_db():
     db_mgr.cursor.execute(sql)
 
     print("填充运行时常量表...")
-    sql = """insert into `constants`(`key`,`value`) values 
-    ('announcement','此字段不为空时,小程序启动时将弹窗提示此字段内容'),
-    ('banner','此字段不为空时,小程序将在页面顶部显示此内容'),
-    ('rules','["使用json数据的格式来编写每一条投稿规则","小程序将自动为其编号,并显示在投稿入口处"]'),
-    ('tags','["标签1","标签2","标签3"]'),
-    ('tagstips','小程序上对标签的解释'),
-    ('textfield0120','小程序\\'匿名投稿\\'标签的提示文字')"""
-    db_mgr.cursor.execute(sql)
+    try:
+        sql = """insert into `constants`(`key`,`value`) values 
+        ('announcement','此字段不为空时,小程序启动时将弹窗提示此字段内容'),
+        ('banner','此字段不为空时,小程序将在页面顶部显示此内容'),
+        ('rules','["使用json数据的格式来编写每一条投稿规则","小程序将自动为其编号,并显示在投稿入口处"]'),
+        ('tags','["标签1","标签2","标签3"]'),
+        ('tagstips','小程序上对标签的解释'),
+        ('textfield0120','小程序\\'匿名投稿\\'标签的提示文字')"""
+        db_mgr.cursor.execute(sql)
+    except Exception as e:
+        logging.exception(e)
 
     print("说说内容跟踪记录表...")
     sql = """CREATE TABLE IF NOT EXISTS `emotions` (
