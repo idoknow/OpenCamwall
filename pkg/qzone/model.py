@@ -310,7 +310,7 @@ class QzoneOperator:
                 'total': visit_count['totalcount'],
             }
         except Exception as e:
-            print(json_text)  # for debug
+            logging.debug(json_text)  # for debug
             raise e
 
     def get_emotion_list(self, num=10):
