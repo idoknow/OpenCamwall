@@ -108,11 +108,11 @@ class QzoneOperator:
 
         inst = self
 
-        self.refresh_qzone_token(attempt=5)
+        # self.refresh_qzone_token(attempt=5)
 
-        if keepalive:
-            self.keepalive_proxy_thread = threading.Thread(target=self.__keepalive, args=(), daemon=True)
-            self.keepalive_proxy_thread.start()
+        # if keepalive:
+        #     self.keepalive_proxy_thread = threading.Thread(target=self.__keepalive, args=(), daemon=True)
+        #     self.keepalive_proxy_thread.start()
 
         # 发送所有正在等待的说说
         temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(), daemon=True)
@@ -183,7 +183,7 @@ class QzoneOperator:
         self.headers['origin'] = 'https://user.qzone.qq.com'
 
         res = requests.post(url="https://up.qzone.qq.com/cgi-bin/upload/cgi_upload_image",
-                            params={"g_tk": self.gtk2, "qzonetoken": self.qzone_token, "uin": self.uin},
+                            params={"g_tk": self.gtk2, "uin": self.uin},
                             data={
                                 "filename": "filename",
                                 "zzpanelkey": "",
@@ -196,7 +196,7 @@ class QzoneOperator:
                                 "uin": self.uin,
                                 "p_skey": self.cookie_dict['p_skey'],
                                 "output_type": "json",
-                                "qzonetoken": self.qzone_token,
+                                "qzonetoken": "",
                                 "refer": "shuoshuo",
                                 "charset": "utf-8",
                                 "output_charset": "utf-8",
@@ -224,8 +224,8 @@ class QzoneOperator:
             images = []
 
         # 检查qzone_token是否存在
-        if not self.qzone_token_valid():
-            raise Exception("无有效qzone_token")
+        # if not self.qzone_token_valid():
+        #     raise Exception("无有效qzone_token")
 
         base64_images = images
 
@@ -271,7 +271,6 @@ class QzoneOperator:
             url="https://user.qzone.qq.com/proxy/domain/taotao.qzone.qq.com/cgi-bin/emotion_cgi_publish_v6",
             params={
                 'g_tk': self.gtk2,
-                'qzonetoken': self.qzone_token,
                 'uin': self.uin,
             },
             cookies=self.cookie_dict,
@@ -288,8 +287,8 @@ class QzoneOperator:
         """
 
         # 检查qzone_token是否存在
-        if not self.qzone_token_valid():
-            raise Exception("无有效qzone_token")
+        # if not self.qzone_token_valid():
+        #     raise Exception("无有效qzone_token")
 
         self.headers['referer'] = 'https://user.qzone.qq.com/' + str(self.uin)
         self.headers['origin'] = 'https://user.qzone.qq.com'
