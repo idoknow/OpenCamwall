@@ -59,12 +59,15 @@ class RefreshQzoneTokenException(Exception):
     pass
 
 
+class CookieExpiredException(Exception):
+    pass
+
+
 class QzoneOperator:
     """Qzone内容管理类"""
     uin = 0
     cookie_dict = {}
     cookie = ""
-    qzone_token = ""
 
     gtk = ""
     gtk2 = ""
@@ -77,6 +80,8 @@ class QzoneOperator:
     cookie_invalidated_callback = None
 
     keepalive_proxy_thread = None
+
+    cookie_valid = False
 
     def __init__(self, uin, cookie, keepalive=True, cookie_invalidated_callback=None):
         self.cookie_invalidated_callback = cookie_invalidated_callback
@@ -103,34 +108,28 @@ class QzoneOperator:
         self.gtk = generate_gtk(self.cookie_dict['skey'])
         self.gtk2 = generate_gtk(self.cookie_dict['p_skey'])
 
-        # if self.keepalive_proxy_thread!=None:
-        #     self.keepalive_proxy_thread.terminate()
-
         inst = self
 
-        self.refresh_qzone_token(attempt=5)
+        self.check_alive()
 
         if keepalive:
-            self.keepalive_proxy_thread = threading.Thread(target=self.__keepalive, args=(), daemon=True)
+            self.keepalive_proxy_thread = threading.Thread(target=self.__keepalive_cookie, args=(), daemon=True)
             self.keepalive_proxy_thread.start()
 
         # 发送所有正在等待的说说
         temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(), daemon=True)
         temp_thread.start()
 
-    def __keepalive(self):
+    def __keepalive_cookie(self):
         global inst
         while True:
             if inst != self:  # 如果不是当前实例，则退出
                 return
-            if self.qzone_token == 'invalidated':
+            if not self.cookie_valid:
                 return
             try:
-                self.refresh_qzone_token(attempt=10)
-                logging.info("刷新qzone_token成功:" + self.qzone_token)
-            except RefreshQzoneTokenException as e:
-                print("刷新qzone_token失败:qzone_token=", self.qzone_token)
-                logging.info("刷新qzone_token失败:qzone_token=", self.qzone_token)
+                self.check_alive(attempt=10)
+            except CookieExpiredException as e:
                 logging.exception(e)
 
                 thr = threading.Thread(target=self.cookie_invalidated_callback, args=(), daemon=True)
@@ -141,37 +140,18 @@ class QzoneOperator:
 
             time.sleep(600)
 
-    def refresh_qzone_token(self, attempt=1):
-        """刷新qzone_token
-        :return: 尝试次数
-        :except: 刷新失败
-        """
+    def check_alive(self, attempt=5, interval=0.4):
         for i in range(attempt):
             try:
-                response = requests.get(
-                    url="https://h5.qzone.qq.com/feeds/inpcqq",
-                    params={"uin": self.uin, "qqver": 5749, "timestamp": int(datetime.now().timestamp() * 1000)},
-                    headers=self.headers, cookies=self.cookie_dict,
-                    timeout=10)
-                if response.status_code == 200:
-                    tokens = re.findall(r'window.g_qzonetoken.*try{return "(.*?)";} catch\(e\)', response.text)
-                    if len(tokens) > 0:
-                        # 刷新成功
-                        self.qzone_token = tokens[0]
-                        return i + 1
-                    else:
-                        logging.debug(response.text)
-                else:
-                    logging.exception("response status code", response.status_code, 'while refreshing qzone token.')
+                vst_data = self.get_visitor_amount_data()
+                self.cookie_valid = True
+                return True
             except Exception as e:
+                time.sleep(interval)
                 continue
-
-        self.qzone_token = 'invalidated'
-
-        raise RefreshQzoneTokenException("刷新qzone_token失败")
-
-    def qzone_token_valid(self):
-        return self.qzone_token != 'invalidated' and self.qzone_token != ''
+        self.cookie_valid = False
+        logging.info("qzone cookie过期")
+        raise CookieExpiredException("qzone cookie已过期")
 
     def upload_image_file(self, file_path):
         b64 = image_base64(file_path)
@@ -183,7 +163,7 @@ class QzoneOperator:
         self.headers['origin'] = 'https://user.qzone.qq.com'
 
         res = requests.post(url="https://up.qzone.qq.com/cgi-bin/upload/cgi_upload_image",
-                            params={"g_tk": self.gtk2, "qzonetoken": self.qzone_token, "uin": self.uin},
+                            params={"g_tk": self.gtk2, "uin": self.uin},
                             data={
                                 "filename": "filename",
                                 "zzpanelkey": "",
@@ -196,7 +176,7 @@ class QzoneOperator:
                                 "uin": self.uin,
                                 "p_skey": self.cookie_dict['p_skey'],
                                 "output_type": "json",
-                                "qzonetoken": self.qzone_token,
+                                "qzonetoken": "",
                                 "refer": "shuoshuo",
                                 "charset": "utf-8",
                                 "output_charset": "utf-8",
@@ -222,10 +202,6 @@ class QzoneOperator:
 
         if images is None:
             images = []
-
-        # 检查qzone_token是否存在
-        if not self.qzone_token_valid():
-            raise Exception("无有效qzone_token")
 
         base64_images = images
 
@@ -271,7 +247,6 @@ class QzoneOperator:
             url="https://user.qzone.qq.com/proxy/domain/taotao.qzone.qq.com/cgi-bin/emotion_cgi_publish_v6",
             params={
                 'g_tk': self.gtk2,
-                'qzonetoken': self.qzone_token,
                 'uin': self.uin,
             },
             cookies=self.cookie_dict,
@@ -286,10 +261,6 @@ class QzoneOperator:
         :return: 请求结果
         :except: 删除说说失败
         """
-
-        # 检查qzone_token是否存在
-        if not self.qzone_token_valid():
-            raise Exception("无有效qzone_token")
 
         self.headers['referer'] = 'https://user.qzone.qq.com/' + str(self.uin)
         self.headers['origin'] = 'https://user.qzone.qq.com'

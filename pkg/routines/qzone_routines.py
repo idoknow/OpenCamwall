@@ -13,7 +13,7 @@ from mirai import Image
 
 def qzone_cookie_invalidated_callback():
     chat_bot = pkg.chat.manager.get_inst()
-    chat_bot.send_message_to_admins(["[bot]qzone_token刷新失败,cookie可能已经失效,回复'更新cookie'进行重新登录"])
+    chat_bot.send_message_to_admins(["[bot]cookie已失效,回复'更新cookie'进行重新登录"])
 
 
 def login_via_qrcode_callback(path):
@@ -33,12 +33,6 @@ def clean_pending_posts(interval_seconds=10):
         mutex.acquire()
         db_inst = pkg.database.database.get_inst()
         posts_data = db_inst.pull_posts(status='通过')
-
-        if len(posts_data['posts']) > 0:
-            # 检查qzone_token是否可用
-            if not pkg.qzone.model.get_inst().qzone_token_valid():
-                pkg.chat.manager.get_inst().send_message_to_admins("[bot]无可用qzone_token,请先刷新cookie后重试")
-                return
 
         for post in posts_data['posts']:
             # print("正在发送",post)
