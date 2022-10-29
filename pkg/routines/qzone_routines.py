@@ -34,6 +34,14 @@ def clean_pending_posts(interval_seconds=10):
         db_inst = pkg.database.database.get_inst()
         posts_data = db_inst.pull_posts(status='通过')
 
+        if len(posts_data['posts']) > 0:
+            # 检查qzone_cookie是否可用
+            try:
+                res = pkg.qzone.model.get_inst().check_alive()
+            except pkg.qzone.model.CookieExpiredException as e:
+                pkg.chat.manager.get_inst().send_message_to_admins("[bot]无可用qzone_cookie,请先刷新cookie后重试")
+                return
+
         for post in posts_data['posts']:
             # print("正在发送",post)
             try:
