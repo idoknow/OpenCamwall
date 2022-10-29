@@ -21,6 +21,7 @@ text_render_font = ImageFont.truetype("simhei.ttf", 32, encoding="utf-8")
 label_render_font = ImageFont.truetype("simhei.ttf", 20, encoding="utf-8")
 anonymous_nick_font = ImageFont.truetype("simhei.ttf", 45, encoding="utf-8")
 comment_text = ImageFont.truetype("msyh.ttc", 14, encoding="utf-8")
+id_text = ImageFont.truetype("msyh.ttc", 40, encoding="utf-8")
 
 
 def get_qq_nickname(uin):
@@ -320,6 +321,10 @@ def render_text_image(post, path='cache/text.png', watermarker=None, left_bottom
     draw.text((25, img.size[1] - 25), left_bottom_text, fill=(130, 130, 130), font=comment_text)
     draw.text((535, img.size[1] - 25), right_bottom_text, fill=(130, 130, 130), font=comment_text)
 
+    # 绘制标号
+    id_str = "{}".format(post['id'])
+    draw.text((img.size[0] - (len(id_str) * 20 + 90), 20), "##" + id_str, fill=(220, 220, 220), font=id_text)
+
     img.save(path)
 
     return path
@@ -388,8 +393,7 @@ class EmotionPublisher:
 
         text = "## {}".format(post['id']) \
                + (("\nQQ:" + post['qq'] + "\n@{{uin:{},nick:{},who:1}}"
-                   .format(post["qq"], get_qq_nickname(post['qq']))) if not
-        post['anonymous'] else "") + lnk_text
+                   .format(post["qq"], get_qq_nickname(post['qq']))) if not post['anonymous'] else "") + lnk_text
 
         image_files = [text_image_path]
 
@@ -458,7 +462,7 @@ if __name__ == '__main__':
     text = "🐢🐢🐢🧔🤴👳🎋🎃🎈🧨✨🎉🎉🎉🎉🎉🪢🪢🥼🥼🥽🥽🖼🖼🎨🎨🧵🎖🥇🥈🥉🏅🎲🍔🍕🍗🍖🥡🥠🍘"
     render_text_image({
         "result": "success",
-        "id": 764,
+        "id": 16041,
         "openid": "",
         "qq": "1010553892",
         "timestamp": 1648184113,
