@@ -2,7 +2,7 @@ import json
 import logging
 import time
 
-from flask import Flask, request
+from flask import Flask, request, send_file
 from flask_cors import CORS
 import sys
 
@@ -12,6 +12,7 @@ import pkg.routines.post_routines
 
 sys.path.append("../")
 from pkg.database.database import MySQLConnection
+from pkg.database.mediamgr import MediaManager
 
 inst = None
 
@@ -21,6 +22,8 @@ class RESTfulAPI:
 
     db_mgr = None
 
+    media_mgr = None
+
     host = ''
     port = 8989
     domain = ''
@@ -28,10 +31,11 @@ class RESTfulAPI:
 
     proxy_thread = None
 
-    def __init__(self, db: MySQLConnection, port=8989, host='0.0.0.0', domain='', ssl_context=None):
+    def __init__(self, db: MySQLConnection, mm: MediaManager, port=8989, host='0.0.0.0', domain='', ssl_context=None):
         self.db_mgr = db
+        self.media_mgr = mm
 
-        app = Flask(__name__)
+        app = Flask('__name__')
 
         # 注册各接口
         @app.route('/postnew', methods=['GET'])
@@ -197,6 +201,32 @@ class RESTfulAPI:
                 logging.exception(e)
                 return "{{\"result\":\"err:{}\"}}".format(str(e))
 
+        @app.route('/media/upload_image', methods=['PUT', 'POST'])
+        def upload_media():
+            try:
+                file = request.files['file']
+                if file is None:
+                    raise Exception('no file')
+
+                result = self.media_mgr.upload_image(request.files['file'])
+                return json.dumps(result, ensure_ascii=False)
+            except Exception as e:
+                logging.exception(e)
+                return "{{\"result\":\"err:{}\"}}".format(str(e))
+
+        @app.route('/media/download_image/<string:file_name>', methods=['GET'])
+        def download_media(file_name):
+            try:
+                if '/' in file_name:
+                    return 'error', 400
+                file_path = self.media_mgr.download_image(file_name)
+                if file_path is None:
+                    return 'error', 404
+                return send_file(file_path)
+            except Exception as e:
+                logging.exception(e)
+                return 'error', 500
+
         @app.route('/stuwork/submit_ticket', methods=['GET'])
         def stuwork_submit_ticket():
             try:
@@ -269,6 +299,7 @@ class RESTfulAPI:
         self.app = app
         self.app.config['JSON_AS_ASCII'] = False
         self.app.config["CACHE_TYPE"] = "null"
+        self.app.config["FILE_FOLDER"] = '.'
 
         CORS(self.app, supports_credentials=True)
 

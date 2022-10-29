@@ -184,13 +184,14 @@ class MySQLConnection:
         finally:
             self.release()
 
-        pkg.routines.post_routines.new_post_incoming({
-            'id': result[0],
-            'text': text,
-            'media': media,
-            'anonymous': anonymous,
-            'qq': qq,
-        })
+        thr = threading.Thread(target=pkg.routines.post_routines.new_post_incoming, args=({
+                                                                                              'id': result[0],
+                                                                                              'text': text,
+                                                                                              'media': media,
+                                                                                              'anonymous': anonymous,
+                                                                                              'qq': qq,
+                                                                                          },), daemon=True)
+        thr.start()
 
         return result[0]
 
