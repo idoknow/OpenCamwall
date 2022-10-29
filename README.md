@@ -51,6 +51,7 @@
 * pymysql
 * yiri-mirai
 * colorlog
+* fonttools
 
 ### 框架
 

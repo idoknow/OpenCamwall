@@ -3,6 +3,8 @@ import json
 import logging
 import os
 
+from fontTools.ttLib import TTFont
+
 import pkg.qzone.model
 import pkg.chat.manager
 import re
@@ -23,6 +25,9 @@ anonymous_nick_font = ImageFont.truetype("simhei.ttf", 45, encoding="utf-8")
 comment_text = ImageFont.truetype("msyh.ttc", 14, encoding="utf-8")
 id_text = ImageFont.truetype("msyh.ttc", 40, encoding="utf-8")
 
+font = TTFont("simhei.ttf")
+uniMap = font['cmap'].tables[0].ttFont.getBestCmap()
+
 
 def get_qq_nickname(uin):
     url = "https://r.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins={}".format(uin)
@@ -37,17 +42,28 @@ extra = [u"\U00002728", u"\U0001faa2", u"\U0001f9f5", u"\U0000263a", u"\U0000274
          u"\U0001f21a"]
 
 
+def is_char_in_font(content):
+    return ord(content) in uniMap.keys()
+
+
 def is_emoji(content):
     if not content:
         return False
 
     print(content, "%d %s" % (ord(content), hex(ord(content))))
-    if u"\U0001F300" <= content <= u"\U0001F9EF" or content in extra:
-        # print("is emoji")
-        return True
-    else:
+
+    icif = not is_char_in_font(content)
+
+    if not icif:
         print("not emoji")
-        return False
+    return icif
+
+    # if u"\U0001F300" <= content <= u"\U0001F9EF" or content in extra:
+    #     # print("is emoji")
+    #     return True
+    # else:
+    #     print("not emoji")
+    #     return False
 
 
 def ensure_emoji(unicode):
