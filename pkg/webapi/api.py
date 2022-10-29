@@ -85,7 +85,10 @@ class RESTfulAPI:
         def cancel_one_post():
             try:
                 # 获取id
-                post_id = self.db_mgr.pull_one_post(status='未审核', openid=request.args['openid'])['id']
+                post = self.db_mgr.pull_one_post(status='未审核', openid=request.args['openid'])
+                if 'id' not in post:
+                    return "此稿件状态已改变"
+                post_id = post['id']
                 self.db_mgr.update_post_status(post_id, '取消')
 
                 return 'success'
