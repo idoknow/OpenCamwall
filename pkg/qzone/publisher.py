@@ -9,6 +9,8 @@ import re
 import threading
 import time
 
+import pkg.database.mediamgr
+
 import requests
 
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
@@ -368,7 +370,7 @@ class EmotionPublisher:
                     raise e
                 continue
 
-    def prepare_post(self, post):
+    def prepare_and_publish_post(self, post):
         global text_render_font
 
         # 渲染文字
@@ -394,7 +396,10 @@ class EmotionPublisher:
         # 下载图片文件
 
         for media in json.loads(post['media']):
-            image_files.append(self.download_cloud_image(media, 'cache/{}'.format(int(time.time()))))
+            if media.startswith("cloud:"):
+                image_files.append(self.download_cloud_image(media, 'cache/{}'.format(int(time.time()))))
+            else:
+                image_files.append(pkg.database.mediamgr.get_inst().get_file_path(media))
 
         return pkg.qzone.model.get_inst().publish_emotion(text, image_files)
 

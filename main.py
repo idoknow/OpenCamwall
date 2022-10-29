@@ -11,6 +11,7 @@ import colorlog
 
 import pkg.chat.manager
 import pkg.database.database
+import pkg.database.mediamgr
 import pkg.webapi.api
 import pkg.qzone.login
 import pkg.qzone.model
@@ -42,9 +43,12 @@ def main():
                                         config.admin_uins,
                                         config.admin_groups, db_mgr)
 
+    media_mgr = pkg.database.mediamgr.MediaManager('media')
+
     # RESTful API
     restful_api = pkg.webapi.api.RESTfulAPI(
         db_mgr,
+        media_mgr,
         port=config.api_port,
         domain=config.api_domain,
         ssl_context=config.api_ssl_context

@@ -38,7 +38,7 @@ def clean_pending_posts(interval_seconds=10):
             # print("正在发送",post)
             try:
                 start_ts = time.time()
-                tid = pkg.qzone.publisher.get_inst().prepare_post(post)
+                tid = pkg.qzone.publisher.get_inst().prepare_and_publish_post(post)
                 # 发表完成
                 finish_ts = time.time()
                 # pkg.chat.manager.get_inst().send_message_to_admins(

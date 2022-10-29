@@ -378,7 +378,7 @@ class QzoneOperator:
             comment_amt = crt_newdata["CS"]
             forward_amt = crt_newdata["ZS"]
 
-            return (like_amt, comment_amt, forward_amt)
+            return like_amt, comment_amt, forward_amt
 
         return -1, -1, -1
 

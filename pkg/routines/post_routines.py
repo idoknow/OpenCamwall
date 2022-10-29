@@ -7,6 +7,7 @@ from mirai import Image
 import config
 import pkg.chat.manager
 import pkg.database.database
+import pkg.database.mediamgr
 
 import pkg.routines.qzone_routines
 import pkg.qzone.model
@@ -30,7 +31,11 @@ def new_post_incoming(post_data):
         # 下载所有图片
         publisher = pkg.qzone.publisher.get_inst()
         for media in medias:
-            message_chain.append(Image(path=publisher.download_cloud_image(media, 'cache/{}'.format(int(time.time())))))
+            if media.startswith('cloud:'):
+                message_chain.append(Image(path=publisher
+                                           .download_cloud_image(media, 'cache/{}'.format(int(time.time())))))
+            else:
+                message_chain.append(Image(path=pkg.database.mediamgr.get_inst().get_file_path(media)))
 
     chat_inst = pkg.chat.manager.get_inst()
     chat_inst.send_message_to_admin_groups(message_chain)
