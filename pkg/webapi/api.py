@@ -219,7 +219,7 @@ class RESTfulAPI:
             try:
                 if '/' in file_name:
                     return 'error', 400
-                file_path = self.media_mgr.download_image(file_name)
+                file_path = self.media_mgr.get_file_path(file_name)
                 if file_path is None:
                     return 'error', 404
                 return send_file(file_path)

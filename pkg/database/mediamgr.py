@@ -11,6 +11,8 @@ class MediaManager:
     root_path = 'media'
 
     def __init__(self, root_path: str):
+        global inst
+        inst = self
         self.root_path = root_path
 
         if not os.path.exists(self.root_path):
@@ -39,7 +41,7 @@ class MediaManager:
 
         return result
 
-    def download_image(self, file_name: str):
+    def get_file_path(self, file_name: str):
         file_path = os.path.join(self.root_path, file_name)
         if not os.path.exists(file_path):
             return None
