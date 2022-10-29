@@ -50,12 +50,8 @@ def is_emoji(content):
     if not content:
         return False
 
-    print(content, "%d %s" % (ord(content), hex(ord(content))))
-
     icif = not is_char_in_font(content)
 
-    if not icif:
-        print("not emoji")
     return icif
 
     # if u"\U0001F300" <= content <= u"\U0001F9EF" or content in extra:
