@@ -33,12 +33,20 @@ def get_qq_nickname(uin):
     return nickname
 
 
+extra = [u"\U00002728", u"\U0001faa2", u"\U0001f9f5", u"\U0000263a", u"\U0000274c", u"\U00002795", u"\U0001f236",
+         u"\U0001f21a"]
+
+
 def is_emoji(content):
     if not content:
         return False
-    if u"\U0001F300" <= content <= u"\U0001F9EF":
+
+    print(content, "%d %s" % (ord(content), hex(ord(content))))
+    if u"\U0001F300" <= content <= u"\U0001F9EF" or content in extra:
+        # print("is emoji")
         return True
     else:
+        print("not emoji")
         return False
 
 
@@ -228,7 +236,7 @@ def render_text_image(post, path='cache/text.png', watermarker=None, left_bottom
         mask_draw = ImageDraw.Draw(mask)
         mask_draw.ellipse((0, 0, marker_size[0], marker_size[1]), fill=(255, 255, 255, 45))
 
-        masked = Image.new("RGBA", marker_size, color=(255, 255, 255, 0))
+        masked = Image.new("RGBA", marker_size, color=(255, 255, 255, 100))
         masked.paste(marker, box=(0, 0))
 
         img.paste(masked, box=(img.size[0] - 150, img.size[1] - 150), mask=mask)
@@ -459,7 +467,7 @@ def get_inst() -> EmotionPublisher:
 
 if __name__ == '__main__':
     # text = "😀😁😂🤣😃😄😅😆😉😊😋😎😍😘🥰😗😙🥲😚🙂🤗🤩🤔🤨😐😑😶🌫😏😣😥😮🤐😯😪😫🥱😴😌😛😜😝🤤😒😓😔😕🙃🤑😲🙁😞😟😤😢😭😦😧😨😩🤯😬😮💨😰😱🥵🥶😳🤪😵😵💫🥴😠😡🤬😷🤒🤕🤢🤮🤧😇🥳🥸🥺🤠🤡🤥🤫🤭🧐🤓"
-    text = "🐢🐢🐢🧔🤴👳🎋🎃🎈🧨✨🎉🎉🎉🎉🎉🪢🪢🥼🥼🥽🥽🖼🖼🎨🎨🧵🎖🥇🥈🥉🏅🎲🍔🍕🍗🍖🥡🥠🍘"
+    text = "🐢🐢🐢🧔🤴👳🎋🎃🎈🧨✨🎉🎉🎉🎉🎉🪢🪢🥼🥼🥽🥽🖼🖼🎨🎨🧵🎖🥇🥈🥉🏅🎲🍔🍕🍗🍖🥡🥠🍘 🥠 🈶🈚 ➕🐧418068326"
     render_text_image({
         "result": "success",
         "id": 16041,
