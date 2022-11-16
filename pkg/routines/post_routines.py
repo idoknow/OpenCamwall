@@ -86,8 +86,8 @@ def post_finished(post_id, qq, tid):
                 if Path(sponsor_qrcode).exists():
                     message_chain.append(Image(path=sponsor_qrcode))
 
-            chat_inst = pkg.chat.manager.get_inst() \
- \
+            chat_inst = pkg.chat.manager.get_inst()
+
             if chat_inst is not None:
                 chat_inst.send_message("person", qq, message_chain)
             logging.info("发送赞助信息给用户:{}".format(qq))
