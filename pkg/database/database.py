@@ -220,7 +220,7 @@ class MySQLConnection:
             total = self.cursor.fetchone()[0]
 
             # 计算page是否超范围
-            if page > math.ceil(total / capacity):
+            if capacity > 0 and page > math.ceil(total / capacity):
                 page = math.ceil(total / capacity)
                 if page == 0:
                     page = 1
@@ -253,7 +253,9 @@ class MySQLConnection:
         result = {
             'result': 'success',
             'page': page,
-            'page_list': [i for i in range(1, int(total / capacity) + (2 if total % capacity > 0 else 1))],
+            'page_list': [i for i in
+                          range(1, int(total / capacity) + (2 if total % capacity > 0 else 1))] if capacity > 0 else [
+                1, ],
             'table_amount': total,
             'status': status,
             'posts': posts

@@ -195,16 +195,30 @@ class ChatBot:
                     if len(denial) > 0:
                         try:
                             self.db.update_post_status(id, "拒绝", review=denial[0], old_status="未审核")
-                            return await self.bot.send_group_message(event.group.id, [Plain("[bot]已拒绝此投稿")])
+                            pending = self.db.pull_posts(status="未审核", capacity=0)
+
+                            msg_chain = [Plain("[bot]已拒绝此投稿")]
+                            if pending['table_amount'] > 0:
+                                msg_chain.append("(剩余{}条未审核)".format(pending['table_amount']))
+
+                            return await self.bot.send_group_message(event.group.id, msg_chain)
                         except Exception as e:
+                            logging.exception(e)
                             return await self.bot.send_group_message(event.group.id,
                                                                      [Plain("[bot]拒绝失败:{}".format(str(e)))])
 
                     elif len(approval) > 0:
                         try:
                             self.db.update_post_status(id, "通过", old_status="未审核")
-                            return await self.bot.send_group_message(event.group.id, [Plain("[bot]已通过此投稿")])
+                            pending = self.db.pull_posts(status="未审核", capacity=0)
+
+                            msg_chain = [Plain("[bot]已通过此投稿")]
+                            if pending['table_amount'] > 0:
+                                msg_chain.append("(剩余{}条未审核)".format(pending['table_amount']))
+
+                            return await self.bot.send_group_message(event.group.id, msg_chain)
                         except Exception as e:
+                            logging.exception(e)
                             return await self.bot.send_group_message(event.group.id,
                                                                      [Plain("[bot]通过失败:{}".format(str(e)))])
 
