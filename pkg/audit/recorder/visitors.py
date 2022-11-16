@@ -28,6 +28,8 @@ last_today_amount = -1
 
 def record_visitor():
     global db_cursor, last_record_total, mysql_conn, last_today_amount
+    if pkg.qzone.model.get_inst() is None:
+        return
     try:
         obj = {
             'data': pkg.qzone.model.get_inst().get_visitor_amount_data(),
