@@ -131,7 +131,7 @@ class ChatBot:
         logging.info("[QQ消息:{}".format(event.sender.id) + "]:" + str(event.message_chain))
         if event.sender.id == self.uin:
             return
-        elif '更新cookie' in str(event.message_chain):
+        elif '更新cookie' in str(event.message_chain) and event.sender.id in self.admin_uins:
             update_thread = threading.Thread(target=update_cookie_workflow, daemon=True)
             update_thread.start()
         else:
