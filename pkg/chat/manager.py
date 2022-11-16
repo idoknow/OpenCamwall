@@ -15,6 +15,8 @@ import sys
 sys.path.append("../")
 from pkg.database.database import MySQLConnection
 
+import pkg.funcmgr.control as funcmgr
+
 inst = None
 
 updating = False
@@ -44,7 +46,9 @@ def update_cookie_workflow():
                                                    cookie_str, cookie_invalidated_callback=pkg.routines.qzone_routines
                                                    .qzone_cookie_invalidated_callback)
 
-        chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
+        if chat_bot is not None:
+            chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
+
         logging.info("已通过二维码登录QQ空间")
 
         # 把cookie写进config.py
@@ -117,6 +121,7 @@ class ChatBot:
         for admin_group in self.admin_groups:
             self.send_message('group', admin_group, message_chain)
 
+    @funcmgr.function([funcmgr.Functions.CHAT])
     def send_message(self, target_type, target, message):
         if target_type == 'group':
             send_task = self.bot.send_group_message(target, message)
@@ -131,7 +136,7 @@ class ChatBot:
         logging.info("[QQ消息:{}".format(event.sender.id) + "]:" + str(event.message_chain))
         if event.sender.id == self.uin:
             return
-        elif '更新cookie' in str(event.message_chain):
+        elif '更新cookie' in str(event.message_chain) and event.sender.id in self.admin_uins:
             update_thread = threading.Thread(target=update_cookie_workflow, daemon=True)
             update_thread.start()
         else:

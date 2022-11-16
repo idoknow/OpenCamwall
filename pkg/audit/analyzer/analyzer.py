@@ -5,6 +5,8 @@ import time
 
 import pkg.database.database
 
+import pkg.funcmgr.control as funcmgr
+
 TIME_PERIOD = [23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 2, 1, 0, ]
 
 ANALYZE_ALL_PERIOD = 10
@@ -14,6 +16,9 @@ db_cursor = 0
 
 
 # 分析历史热度和热度比
+
+@funcmgr.function([funcmgr.Functions.AUDIT_ANALYZER,
+                   funcmgr.Functions.AUDIT_ANALYZER_HISTORY_HEAT_RATE_AND_HEAT])
 def analyze_history_heat_rate_and_heat():
     global db_cursor, mysql_conn
 
@@ -97,6 +102,8 @@ def analyze_history_heat_rate_and_heat():
 
 
 # 分析历史说说发表
+@funcmgr.function([funcmgr.Functions.AUDIT_ANALYZER,
+                   funcmgr.Functions.AUDIT_ANALYZER_HISTORY_EMO_POSTED])
 def analyze_history_emo_posted():
     global db_cursor, mysql_conn
 
@@ -133,6 +140,8 @@ def analyze_history_emo_posted():
 
 
 # 分析访客数量
+@funcmgr.function([funcmgr.Functions.AUDIT_ANALYZER,
+                   funcmgr.Functions.AUDIT_ANALYZER_VISITOR_HEAT])
 def analyze_visitor_heat():
     global db_cursor, mysql_conn
     # (07) 1 2 3 4 5 6 7

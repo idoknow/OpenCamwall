@@ -5,10 +5,40 @@ import threading
 import time
 import logging
 from pathlib import Path
-
-import config
+import pkg.funcmgr.control as funcmgr
 import colorlog
+import config
+import functions
 
+funcmgr.apply_switches(functions.function_switches)
+
+log_colors_config = {
+    'DEBUG': 'green',  # cyan white
+    'INFO': 'white',
+    'WARNING': 'yellow',
+    'ERROR': 'red',
+    'CRITICAL': 'bold_red',
+}
+
+logging.basicConfig(level=config.logging_level,  # 设置日志输出格式
+                    filename='camwall.log',  # log日志输出的文件位置和文件名
+                    format="[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : %(message)s",
+                    # 日志输出的格式
+                    # -8表示占位符，让输出左对齐，输出长度都为8位
+                    datefmt="%Y-%m-%d %H:%M:%S"  # 时间输出的格式
+                    )
+sh = logging.StreamHandler()
+sh.setLevel(config.logging_level)
+sh.setFormatter(colorlog.ColoredFormatter(
+    fmt="%(log_color)s[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : "
+        "%(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    log_colors=log_colors_config
+))
+logging.getLogger().addHandler(sh)
+
+# 由于在引用时，其包内的函数装饰器就会被调用，而装饰器内的logging需要被初始化才能生效
+# 所以在初始化logging之后再import
 import pkg.chat.manager
 import pkg.database.database
 import pkg.database.mediamgr
@@ -24,7 +54,11 @@ import pkg.audit.recorder.likers
 import pkg.audit.analyzer.analyzer
 
 
+@funcmgr.function([funcmgr.Functions.ALL])
 def main():
+    logging.info("Main process")
+
+    logging.info("建立数据库对象..")
     # 建立数据库对象
     db_mgr = pkg.database.database.MySQLConnection(config.database_context['host'],
                                                    config.database_context['port'],
@@ -34,27 +68,27 @@ def main():
                                                    appid=config.mini_program_appid,
                                                    app_secret=config.mini_program_secret)
 
-    # 自动回复机器人
-    chat_bot = pkg.chat.manager.ChatBot(config.qq_bot_uin,
-                                        config.mirai_http_host,
-                                        config.mirai_http_verify_key,
-                                        config.auto_reply_message,
-                                        config.qrcode_path,
-                                        config.admin_uins,
-                                        config.admin_groups, db_mgr)
+    @funcmgr.function([funcmgr.Functions.CHAT])
+    def initialize_chat_bot():
+        logging.info("初始化QQ机器人..")
+        # 自动回复机器人
+        chat_bot = pkg.chat.manager.ChatBot(config.qq_bot_uin,
+                                            config.mirai_http_host,
+                                            config.mirai_http_verify_key,
+                                            config.auto_reply_message,
+                                            config.qrcode_path,
+                                            config.admin_uins,
+                                            config.admin_groups, db_mgr)
 
+        chat_bot_thread = threading.Thread(target=chat_bot.bot.run, args=(), daemon=True)
+
+        chat_bot_thread.start()
+
+    initialize_chat_bot()
+
+    logging.info("初始化媒体管理器..")
     media_mgr = pkg.database.mediamgr.MediaManager('media')
 
-    # RESTful API
-    restful_api = pkg.webapi.api.RESTfulAPI(
-        db_mgr,
-        media_mgr,
-        port=config.api_port,
-        domain=config.api_domain,
-        ssl_context=config.api_ssl_context
-    )
-
-    # 小程序图片获取
     emotion_publisher = pkg.qzone.publisher.EmotionPublisher(
         env_id=config.cloud_env_id,
         app_id=config.mini_program_appid,
@@ -62,77 +96,115 @@ def main():
         watermarker=("cache/watermarker.jpg" if Path("cache/watermarker.jpg").exists() else '')
     )
 
-    chat_bot_thread = threading.Thread(target=chat_bot.bot.run, args=(), daemon=True)
-    restful_api_thread = threading.Thread(target=restful_api.run_api, args=(), daemon=True)
+    @funcmgr.function([funcmgr.Functions.RESTFUL])
+    def initialize_restful():
+        # RESTful API
+        restful_api = pkg.webapi.api.RESTfulAPI(
+            db_mgr,
+            media_mgr,
+            port=config.api_port,
+            domain=config.api_domain,
+            ssl_context=config.api_ssl_context
+        )
 
-    chat_bot_thread.start()
-    restful_api_thread.start()
+        restful_api_thread = threading.Thread(target=restful_api.run_api, args=(), daemon=True)
+
+        restful_api_thread.start()
+
+    initialize_restful()
 
     time.sleep(5)
 
-    # 向管理员发送QQ空间登录二维码
-    qzone_login = pkg.qzone.login.QzoneLoginManager()
-    try:
-        if config.qzone_cookie != '':
-            qzone_oper = pkg.qzone.model.QzoneOperator(config.qzone_uin,
-                                                       config.qzone_cookie,
+    @funcmgr.function([funcmgr.Functions.QZONE])
+    def initialize_qzone():
+
+        logging.info("初始化QQ空间..")
+
+        chat_inst = pkg.chat.manager.get_inst()
+
+        # 向管理员发送QQ空间登录二维码
+        qzone_login = pkg.qzone.login.QzoneLoginManager()
+        try:
+            if config.qzone_cookie != '':
+                qzone_oper = pkg.qzone.model.QzoneOperator(config.qzone_uin,
+                                                           config.qzone_cookie,
+                                                           cookie_invalidated_callback=pkg.routines.qzone_routines
+                                                           .qzone_cookie_invalidated_callback)
+                # chat_bot.send_message_to_admins(["[bot]已使用提供的cookie登录QQ空间"])
+                logging.info("已使用提供的cookie登录QQ空间")
+            else:
+                raise Exception("没有提供cookie")
+        except Exception as e:
+            logging.info("使用提供的cookie登录QQ空间失败,尝试使用二维码登录")
+            cookies = qzone_login.login_via_qrcode(
+                qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
+
+            cookie_str = ""
+
+            for k in cookies:
+                cookie_str += "{}={};".format(k, cookies[k])
+
+            print(cookie_str)
+            qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
+                                                       cookie_str,
                                                        cookie_invalidated_callback=pkg.routines.qzone_routines
                                                        .qzone_cookie_invalidated_callback)
-            # chat_bot.send_message_to_admins(["[bot]已使用提供的cookie登录QQ空间"])
-            logging.info("已使用提供的cookie登录QQ空间")
-        else:
-            raise Exception("没有提供cookie")
-    except Exception as e:
-        logging.info("使用提供的cookie登录QQ空间失败,尝试使用二维码登录")
-        cookies = qzone_login.login_via_qrcode(
-            qrcode_refresh_callback=pkg.routines.qzone_routines.login_via_qrcode_callback)
 
-        cookie_str = ""
+            if chat_inst is not None:
+                chat_inst.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
+            logging.info("已通过二维码登录QQ空间")
 
-        for k in cookies:
-            cookie_str += "{}={};".format(k, cookies[k])
+            # 把cookie写进config.py
+            config_file = open('config.py', encoding='utf-8', mode='r+')
+            config_str = config_file.read()
+            config_str = re.sub(r'qzone_cookie = .*', 'qzone_cookie = \'{}\''.format(cookie_str), config_str)
 
-        print(cookie_str)
-        qzone_oper = pkg.qzone.model.QzoneOperator(int(str(cookies['uin']).replace("o", "")),
-                                                   cookie_str,
-                                                   cookie_invalidated_callback=pkg.routines.qzone_routines
-                                                   .qzone_cookie_invalidated_callback)
-        chat_bot.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
-        logging.info("已通过二维码登录QQ空间")
+            config_file.seek(0)
+            config_file.write(config_str)
+            config_file.close()
 
-        # 把cookie写进config.py
-        config_file = open('config.py', encoding='utf-8', mode='r+')
-        config_str = config_file.read()
-        config_str = re.sub(r'qzone_cookie = .*', 'qzone_cookie = \'{}\''.format(cookie_str), config_str)
+    initialize_qzone()
 
-        config_file.seek(0)
-        config_file.write(config_str)
-        config_file.close()
+    @funcmgr.function([funcmgr.Functions.AUDIT])
+    def initialize_audit_module():
+        time.sleep(3)
 
-    time.sleep(3)
-    # 启动分析程序
-    visitor_recorder_thread = threading.Thread(target=pkg.audit.recorder.visitors.initialize, args=(), daemon=True)
-    visitor_recorder_thread.start()
+        logging.info("初始化审计模块..")
 
-    time.sleep(3)
+        @funcmgr.function([funcmgr.Functions.AUDIT_RECORDER])
+        def audit_recorder():
+            @funcmgr.function([funcmgr.Functions.AUDIT_RECORDER_VISITOR])
+            def visitor():
+                # 启动分析程序
+                visitor_recorder_thread = threading.Thread(target=pkg.audit.recorder.visitors.initialize, args=(),
+                                                           daemon=True)
+                visitor_recorder_thread.start()
 
-    liker_recorder_thread = threading.Thread(target=pkg.audit.recorder.likers.initialize_liker_recorder, args=(),
-                                             daemon=True)
-    liker_recorder_thread.start()
+            visitor()
 
-    time.sleep(3)
+            time.sleep(3)
 
-    analyzer_thread = threading.Thread(target=pkg.audit.analyzer.analyzer.initialize, args=(), daemon=True)
-    analyzer_thread.start()
+            @funcmgr.function([funcmgr.Functions.AUDIT_RECORDER_LIKER])
+            def liker():
+                liker_recorder_thread = threading.Thread(target=pkg.audit.recorder.likers.initialize_liker_recorder,
+                                                         args=(),
+                                                         daemon=True)
+                liker_recorder_thread.start()
 
+            liker()
 
-log_colors_config = {
-    'DEBUG': 'green',  # cyan white
-    'INFO': 'white',
-    'WARNING': 'yellow',
-    'ERROR': 'red',
-    'CRITICAL': 'bold_red',
-}
+        audit_recorder()
+
+        time.sleep(3)
+
+        @funcmgr.function([funcmgr.Functions.AUDIT_ANALYZER])
+        def audit_analyzer():
+            analyzer_thread = threading.Thread(target=pkg.audit.analyzer.analyzer.initialize, args=(), daemon=True)
+            analyzer_thread.start()
+
+        audit_analyzer()
+
+    initialize_audit_module()
 
 
 def create_dir_not_exist(path):
@@ -296,23 +368,6 @@ if __name__ == '__main__':
         sys.exit(0)
 
     create_dir_not_exist('cache')
-
-    logging.basicConfig(level=config.logging_level,  # 设置日志输出格式
-                        filename='camwall.log',  # log日志输出的文件位置和文件名
-                        format="[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : %(message)s",
-                        # 日志输出的格式
-                        # -8表示占位符，让输出左对齐，输出长度都为8位
-                        datefmt="%Y-%m-%d %H:%M:%S"  # 时间输出的格式
-                        )
-    sh = logging.StreamHandler()
-    sh.setLevel(config.logging_level)
-    sh.setFormatter(colorlog.ColoredFormatter(
-        fmt="%(log_color)s[%(asctime)s.%(msecs)03d] %(filename)s (%(lineno)d) - [%(levelname)s] : "
-            "%(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        log_colors=log_colors_config
-    ))
-    logging.getLogger().addHandler(sh)
 
     main()
 

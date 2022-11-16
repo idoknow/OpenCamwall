@@ -425,6 +425,8 @@ class EmotionPublisher:
             else:
                 image_files.append(pkg.database.mediamgr.get_inst().get_file_path(media))
 
+        if pkg.qzone.model.get_inst() is None:
+            raise Exception('qzone功能未被启用')
         return pkg.qzone.model.get_inst().publish_emotion(text, image_files)
 
     def download_cloud_image(self, cloud, path):
@@ -441,7 +443,10 @@ class EmotionPublisher:
                 except Exception as e:
                     logging.error("刷新小程序储存access_token失败")
                     logging.exception(e)
-                    pkg.chat.manager.get_inst().send_message_to_admins(["[bot]刷新小程序储存access_token失败"])
+                    chat_inst = pkg.chat.manager.get_inst()
+
+                    if chat_inst is not None:
+                        chat_inst.send_message_to_admins(["[bot]刷新小程序储存access_token失败"])
                     raise e
 
             url = "https://api.weixin.qq.com/tcb/batchdownloadfile?access_token=" + self.access_token

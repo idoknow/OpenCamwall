@@ -127,6 +127,10 @@ def fetch_new_emotions():
     global tracking
     # print("fetch new emotions")
 
+    qzone_inst = pkg.qzone.model.get_inst()
+    if qzone_inst is None:
+        return
+
     respobj = pkg.qzone.model.get_inst().get_emotion_list()
     if respobj["code"] != 200:
         raise Exception("err code:{} msg:{}".format(respobj["code"], respobj["msg"]))
