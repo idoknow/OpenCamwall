@@ -1,6 +1,7 @@
 import hashlib
 import json
 import math
+import re
 import threading
 import time
 import uuid
@@ -21,6 +22,10 @@ def raw_to_escape(raw):
 
 def md5Hash(string):
     return hashlib.md5(str(string).encode('utf8')).hexdigest()
+
+
+def is_openid(openid):
+    return re.match('^o[A-Za-z0-9_-]{27}$', openid)
 
 
 def get_qq_nickname(uin):
@@ -334,6 +339,9 @@ class MySQLConnection:
 
     def fetch_qq_accounts(self, openid):
         self.ensure_connection()
+
+        if not is_openid(openid):
+            raise Exception("invalid openid")
 
         result = {
             'isbanned': False,
