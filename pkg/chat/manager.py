@@ -51,6 +51,10 @@ def update_cookie_workflow():
 
         logging.info("已通过二维码登录QQ空间")
 
+        # 发送所有正在等待的说说
+        temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(), daemon=True)
+        temp_thread.start()
+
         # 把cookie写进config.py
         config_file = open('config.py', encoding='utf-8', mode='r+')
         config_str = config_file.read()

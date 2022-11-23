@@ -132,6 +132,11 @@ def main():
                                                            .qzone_cookie_invalidated_callback)
                 # chat_bot.send_message_to_admins(["[bot]已使用提供的cookie登录QQ空间"])
                 logging.info("已使用提供的cookie登录QQ空间")
+
+                # 发送所有正在等待的说说
+                temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(),
+                                               daemon=True)
+                temp_thread.start()
             else:
                 raise Exception("没有提供cookie")
         except Exception as e:
@@ -153,6 +158,10 @@ def main():
             if chat_inst is not None:
                 chat_inst.send_message_to_admins(["[bot]已通过二维码登录QQ空间"])
             logging.info("已通过二维码登录QQ空间")
+
+            # 发送所有正在等待的说说
+            temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(), daemon=True)
+            temp_thread.start()
 
             # 把cookie写进config.py
             config_file = open('config.py', encoding='utf-8', mode='r+')

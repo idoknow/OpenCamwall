@@ -19,15 +19,6 @@ from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
 inst = None
 
-text_render_font = ImageFont.truetype("simhei.ttf", 32, encoding="utf-8")
-label_render_font = ImageFont.truetype("simhei.ttf", 20, encoding="utf-8")
-anonymous_nick_font = ImageFont.truetype("simhei.ttf", 45, encoding="utf-8")
-comment_text = ImageFont.truetype("msyh.ttc", 14, encoding="utf-8")
-id_text = ImageFont.truetype("msyh.ttc", 40, encoding="utf-8")
-
-font = TTFont("simhei.ttf")
-uniMap = font['cmap'].tables[0].ttFont.getBestCmap()
-
 
 def get_qq_nickname(uin):
     url = "https://r.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins={}".format(uin)
@@ -40,26 +31,6 @@ def get_qq_nickname(uin):
 
 extra = [u"\U00002728", u"\U0001faa2", u"\U0001f9f5", u"\U0000263a", u"\U0000274c", u"\U00002795", u"\U0001f236",
          u"\U0001f21a"]
-
-
-def is_char_in_font(content):
-    return ord(content) in uniMap.keys()
-
-
-def is_emoji(content):
-    if not content:
-        return False
-
-    icif = not is_char_in_font(content)
-
-    return icif
-
-    # if u"\U0001F300" <= content <= u"\U0001F9EF" or content in extra:
-    #     # print("is emoji")
-    #     return True
-    # else:
-    #     print("not emoji")
-    #     return False
 
 
 def ensure_emoji(unicode):
@@ -184,172 +155,6 @@ def find_labels(text):
     return re.findall(r'#\[.+?\]#', text)
 
 
-def render_text_image(post, path='cache/text.png', watermarker=None, left_bottom_text=None, right_bottom_text=None):
-    global text_render_font
-
-    labels = find_labels(post['text'])
-    for label in labels:
-        post['text'] = post['text'].replace(label, '')
-
-    # 分行
-    lines = post['text'].split('\n')
-
-    # 计算并分割
-    final_lines = []
-
-    text_width = 525
-    for line in lines:
-        # 如果长了就分割
-        line_width = text_render_font.getlength(line)
-        if line_width < text_width:
-            final_lines.append(line)
-            continue
-        else:
-            rest_text = line
-            while True:
-                # 分割最前面的一行
-                point = int(len(rest_text) * (text_width / line_width))
-
-                # 检查断点是否在数字中间
-                numbers = indexNumber(rest_text)
-
-                for number in numbers:
-                    if number[1] < point < number[1] + len(number[0]) and number[1] != 0:
-                        point = number[1]
-                        break
-
-                final_lines.append(rest_text[:point])
-                rest_text = rest_text[point:]
-                line_width = text_render_font.getlength(rest_text)
-                if line_width < text_width:
-                    final_lines.append(rest_text)
-                    break
-                else:
-                    continue
-    # 准备画布
-    img = Image.new('RGBA', (750, max(280, len(final_lines) * 35 + 210)), (255, 255, 255, 255))
-    draw = ImageDraw.Draw(img, mode='RGBA')
-
-    # 打平台水印
-    if watermarker is not None and watermarker != '':
-        marker_size = (250, 250)
-
-        marker = Image.open(watermarker, mode='r').convert('RGBA')
-        marker = marker.resize(marker_size)
-
-        for i in range(marker_size[0]):
-            for j in range(marker_size[1]):
-                p = marker.getpixel((i, j))
-                p = p[:-1] + (100,)
-                marker.putpixel((i, j), p)
-        # 圆角蒙版
-        mask = Image.new('RGBA', marker_size, color=(255, 255, 255, 0))
-        # 画一个圆
-        mask_draw = ImageDraw.Draw(mask)
-        mask_draw.ellipse((0, 0, marker_size[0], marker_size[1]), fill=(255, 255, 255, 45))
-
-        masked = Image.new("RGBA", marker_size, color=(255, 255, 255, 100))
-        masked.paste(marker, box=(0, 0))
-
-        img.paste(masked, box=(img.size[0] - 150, img.size[1] - 150), mask=mask)
-
-    # 头像
-    show_avatar_path = ''
-
-    if post['anonymous'] == 1:
-        show_avatar_path = 'bag-on-head.png'
-    else:
-        res = requests.get('https://q1.qlogo.cn/g?b=qq&nk=' + str(post['qq']) + '&s=640')
-        # 使用BytesIO接口
-        with open('cache/avatar.png', 'wb') as f:
-            f.write(res.content)
-        show_avatar_path = 'cache/avatar.png'
-
-    avatar_size = (120, 120)
-
-    avatar_image = Image.open(show_avatar_path, mode='r').convert('RGBA')
-    avatar_image = avatar_image.resize(avatar_size)
-
-    # 圆角蒙版
-    # 新建一个蒙板图, 注意必须是 RGBA 模式
-    mask = Image.new('RGBA', avatar_size, color=(0, 0, 0, 0))
-    # 画一个圆
-    mask_draw = ImageDraw.Draw(mask)
-    mask_draw.ellipse((0, 0, avatar_size[0], avatar_size[1]), fill=(0, 0, 0, 255))
-
-    img.paste(avatar_image, box=(28, 34), mask=mask)
-
-    # 绘制Nick
-    nick_name = ''
-    nick_color = (0, 0, 0)
-    if post['anonymous'] == 1:
-        nick_name = '匿名'
-        nick_color = (120, 120, 120)
-    else:
-        nick_name = get_qq_nickname(post['qq'])
-
-    draw.text((170, 55), nick_name, fill=nick_color, font=anonymous_nick_font)
-
-    # 绘制标签
-
-    x = 0
-    for l in labels:
-        ltext = l.replace("[", "").replace("]", "")
-        draw.rounded_rectangle((168 + x, 102, 168 + x + len(ltext) * 17, 124), radius=5, fill=text_color(ltext))
-        draw.text((170 + x, 102), ltext, fill="#FFFFFF", font=label_render_font)
-        x += len(ltext * 18)
-
-    # 绘制正文
-
-    line_number = 0
-    offset_x = 170
-    offset_y = 130
-    for final_line in final_lines:
-        draw.text((offset_x, offset_y + 35 * line_number), final_line, fill=(0, 0, 0), font=text_render_font)
-        # 遍历此行,检查是否有emoji
-        idx_in_line = 0
-        for ch in final_line:
-            if is_emoji(ch):
-                emoji_img_valid = ensure_emoji(hex(ord(ch))[2:])
-                if emoji_img_valid:  # emoji图像可用,绘制到指定位置
-                    emoji_image = Image.open("emojis/{}.png".format(hex(ord(ch))[2:]), mode='r').convert('RGBA')
-                    emoji_image = emoji_image.resize((32, 32))
-
-                    x, y = emoji_image.size
-
-                    final_emoji_img = Image.new('RGBA', emoji_image.size, (255, 255, 255))
-                    final_emoji_img.paste(emoji_image, (0, 0, x, y), emoji_image)
-
-                    img.paste(final_emoji_img, box=(int(offset_x + idx_in_line * 32), offset_y + 35 * line_number))
-
-            # 检查字符占位宽
-            char_code = ord(ch)
-            if char_code >= 127:
-                idx_in_line += 1
-            else:
-                idx_in_line += 0.5
-
-        line_number += 1
-
-    # 绘制角落
-    if left_bottom_text is None:
-        left_bottom_text = ('匿名用户' if post['anonymous'] else post['qq']) + " 发表于 " + (
-            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(post['timestamp'])))
-    if right_bottom_text is None:
-        right_bottom_text = "开发 @RockChinQ | @Soulter"
-
-    draw.text((25, img.size[1] - 25), left_bottom_text, fill=(130, 130, 130), font=comment_text)
-    draw.text((535, img.size[1] - 25), right_bottom_text, fill=(130, 130, 130), font=comment_text)
-
-    # 绘制标号
-    id_str = "{}".format(post['id'])
-    draw.text((img.size[0] - (len(id_str) * 20 + 90), 20), "##" + id_str, fill=(220, 220, 220), font=id_text)
-
-    img.save(path)
-
-    return path
-
-
 class EmotionPublisher:
     env_id = ''
     app_id = ''
@@ -361,6 +166,15 @@ class EmotionPublisher:
 
     access_token_getting_thread = None
 
+    text_render_font = 0
+    label_render_font = 0
+    anonymous_nick_font = 0
+    comment_text = 0
+    id_text = 0
+
+    font = 0
+    uniMap = 0
+
     def __init__(self, env_id, app_id, app_secret, watermarker=''):
         global inst
         self.env_id = env_id
@@ -369,7 +183,200 @@ class EmotionPublisher:
 
         self.watermarker = watermarker
 
+        self.text_render_font = ImageFont.truetype("simhei.ttf", 32, encoding="utf-8")
+        self.label_render_font = ImageFont.truetype("simhei.ttf", 20, encoding="utf-8")
+        self.anonymous_nick_font = ImageFont.truetype("simhei.ttf", 45, encoding="utf-8")
+        self.comment_text = ImageFont.truetype("msyh.ttc", 14, encoding="utf-8")
+        self.id_text = ImageFont.truetype("msyh.ttc", 40, encoding="utf-8")
+
+        self.font = TTFont("simhei.ttf")
+        self.uniMap = self.font['cmap'].tables[0].ttFont.getBestCmap()
+
         inst = self
+
+    def render_text_image(self, post, path='cache/text.png', watermarker=None, left_bottom_text=None,
+                          right_bottom_text=None):
+        global text_render_font
+
+        labels = find_labels(post['text'])
+        for label in labels:
+            post['text'] = post['text'].replace(label, '')
+
+        # 分行
+        lines = post['text'].split('\n')
+
+        # 计算并分割
+        final_lines = []
+
+        text_width = 525
+        for line in lines:
+            # 如果长了就分割
+            line_width = text_render_font.getlength(line)
+            if line_width < text_width:
+                final_lines.append(line)
+                continue
+            else:
+                rest_text = line
+                while True:
+                    # 分割最前面的一行
+                    point = int(len(rest_text) * (text_width / line_width))
+
+                    # 检查断点是否在数字中间
+                    numbers = indexNumber(rest_text)
+
+                    for number in numbers:
+                        if number[1] < point < number[1] + len(number[0]) and number[1] != 0:
+                            point = number[1]
+                            break
+
+                    final_lines.append(rest_text[:point])
+                    rest_text = rest_text[point:]
+                    line_width = text_render_font.getlength(rest_text)
+                    if line_width < text_width:
+                        final_lines.append(rest_text)
+                        break
+                    else:
+                        continue
+        # 准备画布
+        img = Image.new('RGBA', (750, max(280, len(final_lines) * 35 + 210)), (255, 255, 255, 255))
+        draw = ImageDraw.Draw(img, mode='RGBA')
+
+        # 打平台水印
+        if watermarker is not None and watermarker != '':
+            marker_size = (250, 250)
+
+            marker = Image.open(watermarker, mode='r').convert('RGBA')
+            marker = marker.resize(marker_size)
+
+            for i in range(marker_size[0]):
+                for j in range(marker_size[1]):
+                    p = marker.getpixel((i, j))
+                    p = p[:-1] + (100,)
+                    marker.putpixel((i, j), p)
+            # 圆角蒙版
+            mask = Image.new('RGBA', marker_size, color=(255, 255, 255, 0))
+            # 画一个圆
+            mask_draw = ImageDraw.Draw(mask)
+            mask_draw.ellipse((0, 0, marker_size[0], marker_size[1]), fill=(255, 255, 255, 45))
+
+            masked = Image.new("RGBA", marker_size, color=(255, 255, 255, 100))
+            masked.paste(marker, box=(0, 0))
+
+            img.paste(masked, box=(img.size[0] - 150, img.size[1] - 150), mask=mask)
+
+        # 头像
+        show_avatar_path = ''
+
+        if post['anonymous'] == 1:
+            show_avatar_path = 'bag-on-head.png'
+        else:
+            res = requests.get('https://q1.qlogo.cn/g?b=qq&nk=' + str(post['qq']) + '&s=640')
+            # 使用BytesIO接口
+            with open('cache/avatar.png', 'wb') as f:
+                f.write(res.content)
+            show_avatar_path = 'cache/avatar.png'
+
+        avatar_size = (120, 120)
+
+        avatar_image = Image.open(show_avatar_path, mode='r').convert('RGBA')
+        avatar_image = avatar_image.resize(avatar_size)
+
+        # 圆角蒙版
+        # 新建一个蒙板图, 注意必须是 RGBA 模式
+        mask = Image.new('RGBA', avatar_size, color=(0, 0, 0, 0))
+        # 画一个圆
+        mask_draw = ImageDraw.Draw(mask)
+        mask_draw.ellipse((0, 0, avatar_size[0], avatar_size[1]), fill=(0, 0, 0, 255))
+
+        img.paste(avatar_image, box=(28, 34), mask=mask)
+
+        # 绘制Nick
+        nick_name = ''
+        nick_color = (0, 0, 0)
+        if post['anonymous'] == 1:
+            nick_name = '匿名'
+            nick_color = (120, 120, 120)
+        else:
+            nick_name = get_qq_nickname(post['qq'])
+
+        draw.text((170, 55), nick_name, fill=nick_color, font=self.anonymous_nick_font)
+
+        # 绘制标签
+
+        x = 0
+        for l in labels:
+            ltext = l.replace("[", "").replace("]", "")
+            draw.rounded_rectangle((168 + x, 102, 168 + x + len(ltext) * 17, 124), radius=5, fill=text_color(ltext))
+            draw.text((170 + x, 102), ltext, fill="#FFFFFF", font=self.label_render_font)
+            x += len(ltext * 18)
+
+        # 绘制正文
+
+        line_number = 0
+        offset_x = 170
+        offset_y = 130
+        for final_line in final_lines:
+            draw.text((offset_x, offset_y + 35 * line_number), final_line, fill=(0, 0, 0), font=text_render_font)
+            # 遍历此行,检查是否有emoji
+            idx_in_line = 0
+            for ch in final_line:
+                if self.is_emoji(ch):
+                    emoji_img_valid = ensure_emoji(hex(ord(ch))[2:])
+                    if emoji_img_valid:  # emoji图像可用,绘制到指定位置
+                        emoji_image = Image.open("emojis/{}.png".format(hex(ord(ch))[2:]), mode='r').convert('RGBA')
+                        emoji_image = emoji_image.resize((32, 32))
+
+                        x, y = emoji_image.size
+
+                        final_emoji_img = Image.new('RGBA', emoji_image.size, (255, 255, 255))
+                        final_emoji_img.paste(emoji_image, (0, 0, x, y), emoji_image)
+
+                        img.paste(final_emoji_img, box=(int(offset_x + idx_in_line * 32), offset_y + 35 * line_number))
+
+                # 检查字符占位宽
+                char_code = ord(ch)
+                if char_code >= 127:
+                    idx_in_line += 1
+                else:
+                    idx_in_line += 0.5
+
+            line_number += 1
+
+        # 绘制角落
+        if left_bottom_text is None:
+            left_bottom_text = ('匿名用户' if post['anonymous'] else post['qq']) + " 发表于 " + (
+                time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(post['timestamp'])))
+        if right_bottom_text is None:
+            right_bottom_text = "开发 @RockChinQ | @Soulter"
+
+        draw.text((25, img.size[1] - 25), left_bottom_text, fill=(130, 130, 130), font=self.comment_text)
+        draw.text((535, img.size[1] - 25), right_bottom_text, fill=(130, 130, 130), font=self.comment_text)
+
+        # 绘制标号
+        id_str = "{}".format(post['id'])
+        draw.text((img.size[0] - (len(id_str) * 20 + 90), 20), "##" + id_str, fill=(220, 220, 220), font=self.id_text)
+
+        img.save(path)
+
+        return path
+
+    def is_char_in_font(self, content):
+        return ord(content) in self.uniMap.keys()
+
+    def is_emoji(self, content):
+        if not content:
+            return False
+
+        icif = not self.is_char_in_font(content)
+
+        return icif
+
+        # if u"\U0001F300" <= content <= u"\U0001F9EF" or content in extra:
+        #     # print("is emoji")
+        #     return True
+        # else:
+        #     print("not emoji")
+        #     return False
 
     def get_access_token_loop(self):
         while True:
@@ -399,7 +406,7 @@ class EmotionPublisher:
         global text_render_font
 
         # 渲染文字
-        text_image_path = render_text_image(post, watermarker=self.watermarker)
+        text_image_path = self.render_text_image(post, watermarker=self.watermarker)
 
         # 包装发表文字
 
@@ -485,16 +492,16 @@ def get_inst() -> EmotionPublisher:
 if __name__ == '__main__':
     # text = "😀😁😂🤣😃😄😅😆😉😊😋😎😍😘🥰😗😙🥲😚🙂🤗🤩🤔🤨😐😑😶🌫😏😣😥😮🤐😯😪😫🥱😴😌😛😜😝🤤😒😓😔😕🙃🤑😲🙁😞😟😤😢😭😦😧😨😩🤯😬😮💨😰😱🥵🥶😳🤪😵😵💫🥴😠😡🤬😷🤒🤕🤢🤮🤧😇🥳🥸🥺🤠🤡🤥🤫🤭🧐🤓"
     text = "🐢🐢🐢🧔🤴👳🎋🎃🎈🧨✨🎉🎉🎉🎉🎉🪢🪢🥼🥼🥽🥽🖼🖼🎨🎨🧵🎖🥇🥈🥉🏅🎲🍔🍕🍗🍖🥡🥠🍘 🥠 🈶🈚 ➕🐧418068326"
-    render_text_image({
-        "result": "success",
-        "id": 16041,
-        "openid": "",
-        "qq": "1010553892",
-        "timestamp": 1648184113,
-        "text": text,
-        "media": "[]",
-        "anonymous": 0,
-        "status": "通过",
-        "review": "拒绝:测试"
-    }, path='text.png',
-        watermarker='cache/watermarker.jpg')
+    # render_text_image({
+    #     "result": "success",
+    #     "id": 16041,
+    #     "openid": "",
+    #     "qq": "1010553892",
+    #     "timestamp": 1648184113,
+    #     "text": text,
+    #     "media": "[]",
+    #     "anonymous": 0,
+    #     "status": "通过",
+    #     "review": "拒绝:测试"
+    # }, path='text.png',
+    #     watermarker='cache/watermarker.jpg')

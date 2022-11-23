@@ -4,7 +4,6 @@ import logging
 import threading
 import time
 from datetime import datetime
-import re
 
 import requests
 
@@ -115,10 +114,6 @@ class QzoneOperator:
         if keepalive:
             self.keepalive_proxy_thread = threading.Thread(target=self.__keepalive_cookie, args=(), daemon=True)
             self.keepalive_proxy_thread.start()
-
-        # 发送所有正在等待的说说
-        temp_thread = threading.Thread(target=pkg.routines.qzone_routines.clean_pending_posts, args=(), daemon=True)
-        temp_thread.start()
 
     def __keepalive_cookie(self):
         global inst
@@ -381,6 +376,72 @@ class QzoneOperator:
             return like_amt, comment_amt, forward_amt
 
         return -1, -1, -1
+
+    def emotion_detail(self, tid, uin=0):
+        if uin == 0:
+            uin = self.uin
+
+        url = "https://h5.qzone.qq.com/proxy/domain/taotao.qq.com/cgi-bin/emotion_cgi_msgdetail_v6?" \
+              "r=0.20449710788413666&not_adapt_outpic=1&random=0.20449710788413666&" \
+              "tid={}&uin={}&t1_source=1&not_trunc_con=1&need_right=1&g_tk={}".format(tid, uin, self.gtk2)
+
+        res = requests.get(url=url, cookies=self.cookie_dict)
+
+        respobj = json.loads(res.text.replace("_Callback(", "")[:-2])
+
+        return respobj
+
+    def emotion_set_private(self, tid):
+        """设置说说为私密"""
+
+        # 获取说说原数据
+        detail = self.emotion_detail(tid)
+        if detail['code'] != 0:
+            raise Exception("获取说说原数据失败: " + detail['message'])
+
+        url = "https://user.qzone.qq.com/proxy/domain/taotao.qzone.qq.com/cgi-bin/" \
+              "emotion_cgi_update?g_tk={}".format(self.gtk2)
+
+        data = {
+            'syn_tweet_verson': 1,
+            'tid': tid,
+            'paramstr': 1,
+            'pic_template': '',
+            'richtype': '',
+            'richval': '',
+            'special_url': '',
+            'subrichtype': '',
+            'con': detail['content'],
+            'feedversion': 1,
+            'ver': 1,
+            'ugc_right': 64,
+            'to_sign': 0,
+            'ugcright_id': tid,
+            'hostuin': self.uin,
+            'code_version': 1,
+            'format': 'fs',
+            'qzreferrer': 'https://user.qzone.qq.com/{}/main'.format(self.uin),
+        }
+
+        if 'pic' in detail:
+            richvals = []
+            pic_bos = []
+
+            for pic in detail['pic']:
+                pic_id = pic['pic_id'].split(",")
+                richvals.append(',' + pic_id[1] + ',' + pic_id[2] + ',' + pic_id[2] +
+                                ',{},{},{},,{},{}'.format(pic['pictype'], pic['height'], pic['width'], 0, 0))
+                smallurl = pic['smallurl']
+                pic_bos.append(smallurl.split('bo=')[1])
+
+            data['richtype'] = 1
+            data['subrichtype'] = 1
+            data['richval'] = '	'.join(richvals)
+            data['pic_bo'] = '	'.join(pic_bos)
+
+        res = requests.post(url=url, data=data, cookies=self.cookie_dict)
+
+        return res.text
 
 
 inst = None
