@@ -12,6 +12,7 @@ import pkg.database.mediamgr
 import pkg.routines.qzone_routines
 import pkg.qzone.model
 import pkg.qzone.publisher
+import pkg.audit.recorder.likers
 
 import pkg.funcmgr.control as funcmgr
 
@@ -81,7 +82,7 @@ def post_status_changed(post_id, new_status):
             qzone_inst = pkg.qzone.model.get_inst()
             qzone_inst.emotion_set_private(tid=tid)
 
-            msg_chain.append("[bot]已撤回{}".format(post_id))
+            msg_chain.append("[bot]已撤回##{}".format(post_id))
         except Exception as e:
             msg_chain.append("[bot]撤回失败\n" + str(e))
 
@@ -100,6 +101,9 @@ def post_finished(post_id, qq, tid):
         time.sleep(3)
 
     if tid_valid:
+        # 把tid写入数据库
+        pkg.audit.recorder.likers.go(target=pkg.audit.recorder.likers.fetch_new_emotions)
+
         # 发送赞助信息给用户
         if config.sponsor_message != '':
             # 包装消息链
