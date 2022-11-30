@@ -192,12 +192,15 @@ class ChatBot:
                 # print("denial:",denial)
                 approval = re.findall(r'通过', str(plainText))
                 # print("approval:",approval)
+                recall = re.findall(r'撤回', str(plainText))
+                # print("recall:",recall)
 
-                if len(denial) == len(approval) == 0:
+                if len(denial) == len(approval) == 0 == len(recall):
                     return await self.bot.send_group_message(event.group.id, [
-                        Plain("[bot]审核消息格式:\n##id 通过|拒绝:理由\n\n示例:\n##87 通过\n##89 拒绝:重复投稿")])
+                        Plain(
+                            "[bot]审核消息格式:\n##id 通过|拒绝:理由|撤回:理由\n\n示例:\n##87 通过\n##89 拒绝:重复投稿")])
 
-                elif len(denial) != 0 and len(approval) != 0:
+                elif len(denial) + len(approval) + len(recall) > 1:
                     return await self.bot.send_group_message(event.group.id, [Plain("[bot]要么拒绝要么通过！")])
 
                 else:
@@ -206,7 +209,7 @@ class ChatBot:
                             self.db.update_post_status(id, "拒绝", review=denial[0], old_status="未审核")
                             pending = self.db.pull_posts(status="未审核", capacity=0)
 
-                            msg_chain = [Plain("[bot]已拒绝此投稿")]
+                            msg_chain = [Plain("[bot]已拒绝此稿件")]
                             if pending['table_amount'] > 0:
                                 msg_chain.append("(剩余{}条未审核)".format(pending['table_amount']))
 
@@ -221,7 +224,7 @@ class ChatBot:
                             self.db.update_post_status(id, "通过", old_status="未审核")
                             pending = self.db.pull_posts(status="未审核", capacity=0)
 
-                            msg_chain = [Plain("[bot]已通过此投稿")]
+                            msg_chain = [Plain("[bot]已通过此稿件")]
                             if pending['table_amount'] > 0:
                                 msg_chain.append("(剩余{}条未审核)".format(pending['table_amount']))
 
@@ -230,6 +233,17 @@ class ChatBot:
                             logging.exception(e)
                             return await self.bot.send_group_message(event.group.id,
                                                                      [Plain("[bot]通过失败:{}".format(str(e)))])
+
+                    elif len(recall) > 0:
+                        try:
+                            self.db.update_post_status(id, "撤回", review=recall[0])
+
+                            msg_chain = [Plain("[bot]即将撤回此稿件")]
+                            return await self.bot.send_group_message(event.group.id, msg_chain)
+                        except Exception as e:
+                            logging.exception(e)
+                            return await self.bot.send_group_message(event.group.id,
+                                                                     [Plain("[bot]撤回失败:{}".format(str(e)))])
 
 
 def get_inst() -> ChatBot:

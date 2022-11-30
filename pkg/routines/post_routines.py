@@ -65,6 +65,29 @@ def post_status_changed(post_id, new_status):
     elif new_status == '通过':
         pkg.routines.qzone_routines.clean_pending_posts()
 
+    elif new_status == '撤回':
+        msg_chain = []
+        try:
+            # 查找此稿件的tid
+            db_inst = pkg.database.database.get_inst()
+
+            result = db_inst.get_published_tid(post_id)
+
+            if result['result'] != 'success':
+                raise Exception(result['result'])
+
+            tid = result['tid']
+
+            qzone_inst = pkg.qzone.model.get_inst()
+            qzone_inst.emotion_set_private(tid=tid)
+
+            msg_chain.append("[bot]已撤回{}".format(post_id))
+        except Exception as e:
+            msg_chain.append("[bot]撤回失败\n" + str(e))
+
+        if chat_inst is not None:
+            chat_inst.send_message_to_admin_groups(msg_chain)
+
 
 @funcmgr.function([funcmgr.Functions.ROUTINE_POST_POST_FINISHED])
 def post_finished(post_id, qq, tid):

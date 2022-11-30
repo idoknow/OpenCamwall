@@ -704,6 +704,27 @@ class MySQLConnection:
 
         return result
 
+    def get_published_tid(self, post_id):
+        result = {
+            'result': 'success',
+            'tid': 0,
+        }
+        self.acquire()
+        try:
+            self.ensure_connection()
+            sql = "select `eid` from `emotions` where `pid`={}".format(int(post_id))
+            print(sql)
+            self.cursor.execute(sql)
+            row = self.cursor.fetchone()
+            if row is None:
+                result['result'] = 'fail:没有记录在表的此稿件对应的说说'
+                return result
+            result['tid'] = row[0]
+        finally:
+            self.release()
+
+        return result
+
     def submit_ticket(self, title, openid, contact, content, media):
         result = {
             'result': 'success',
