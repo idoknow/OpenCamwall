@@ -196,7 +196,6 @@ class EmotionPublisher:
 
     def render_text_image(self, post, path='cache/text.png', watermarker=None, left_bottom_text=None,
                           right_bottom_text=None):
-        global text_render_font
 
         labels = find_labels(post['text'])
         for label in labels:
@@ -211,7 +210,7 @@ class EmotionPublisher:
         text_width = 525
         for line in lines:
             # 如果长了就分割
-            line_width = text_render_font.getlength(line)
+            line_width = self.text_render_font.getlength(line)
             if line_width < text_width:
                 final_lines.append(line)
                 continue
@@ -231,7 +230,7 @@ class EmotionPublisher:
 
                     final_lines.append(rest_text[:point])
                     rest_text = rest_text[point:]
-                    line_width = text_render_font.getlength(rest_text)
+                    line_width = self.text_render_font.getlength(rest_text)
                     if line_width < text_width:
                         final_lines.append(rest_text)
                         break
@@ -316,7 +315,7 @@ class EmotionPublisher:
         offset_x = 170
         offset_y = 130
         for final_line in final_lines:
-            draw.text((offset_x, offset_y + 35 * line_number), final_line, fill=(0, 0, 0), font=text_render_font)
+            draw.text((offset_x, offset_y + 35 * line_number), final_line, fill=(0, 0, 0), font=self.text_render_font)
             # 遍历此行,检查是否有emoji
             idx_in_line = 0
             for ch in final_line:
@@ -403,7 +402,6 @@ class EmotionPublisher:
                 continue
 
     def prepare_and_publish_post(self, post):
-        global text_render_font
 
         # 渲染文字
         text_image_path = self.render_text_image(post, watermarker=self.watermarker)
