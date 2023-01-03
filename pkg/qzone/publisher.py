@@ -175,6 +175,8 @@ class EmotionPublisher:
     font = 0
     uniMap = 0
 
+    last_download_watermarker_timestamp = 0
+
     def __init__(self, env_id, app_id, app_secret, watermarker=''):
         global inst
         self.env_id = env_id
@@ -241,6 +243,8 @@ class EmotionPublisher:
         draw = ImageDraw.Draw(img, mode='RGBA')
 
         # 打平台水印
+        if int(time.time()) - self.last_download_watermarker_timestamp > 3600:
+            self.download_watermarker()
         if watermarker is not None and watermarker != '':
             marker_size = (250, 250)
 
@@ -310,7 +314,6 @@ class EmotionPublisher:
             x += len(ltext * 18)
 
         # 绘制正文
-
         line_number = 0
         offset_x = 170
         offset_y = 130
@@ -481,6 +484,15 @@ class EmotionPublisher:
         except Exception as e:
             raise e
 
+    def download_watermarker(self):
+
+        res = requests.get('https://q1.qlogo.cn/g?b=qq&nk=' + str(pkg.chat.manager.get_inst().uin) + '&s=640')
+        # 使用BytesIO接口
+        with open('cache/watermarker', 'wb') as f:
+            f.write(res.content)
+        show_avatar_path = 'cache/watermarker.png'
+        self.last_download_watermarker_timestamp = int(time.time())
+        self.watermarker = show_avatar_path
 
 def get_inst() -> EmotionPublisher:
     global inst
