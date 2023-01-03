@@ -713,7 +713,7 @@ class MySQLConnection:
         try:
             self.ensure_connection()
             sql = "select `eid` from `emotions` where `pid`={}".format(int(post_id))
-            print(sql)
+            # print(sql)
             self.cursor.execute(sql)
             row = self.cursor.fetchone()
             if row is None:

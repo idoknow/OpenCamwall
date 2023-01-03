@@ -242,6 +242,7 @@ class EmotionPublisher:
         img = Image.new('RGBA', (750, max(280, len(final_lines) * 35 + 210)), (255, 255, 255, 255))
         draw = ImageDraw.Draw(img, mode='RGBA')
 
+        print(self.last_download_watermarker_timestamp)
         # 打平台水印
         if int(time.time()) - self.last_download_watermarker_timestamp > 3600:
             self.download_watermarker()
@@ -485,14 +486,16 @@ class EmotionPublisher:
             raise e
 
     def download_watermarker(self):
-
-        res = requests.get('https://q1.qlogo.cn/g?b=qq&nk=' + str(pkg.chat.manager.get_inst().uin) + '&s=640')
+        url = 'https://q1.qlogo.cn/g?b=qq&nk=' + str(pkg.chat.manager.get_inst().uin) + '&s=640'
+        print(url)
+        res = requests.get(url)
         # 使用BytesIO接口
         with open('cache/watermarker', 'wb') as f:
             f.write(res.content)
         show_avatar_path = 'cache/watermarker.png'
         self.last_download_watermarker_timestamp = int(time.time())
         self.watermarker = show_avatar_path
+
 
 def get_inst() -> EmotionPublisher:
     global inst
