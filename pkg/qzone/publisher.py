@@ -490,9 +490,9 @@ class EmotionPublisher:
         print(url)
         res = requests.get(url)
         # 使用BytesIO接口
-        with open('cache/watermarker', 'wb') as f:
+        with open('cache/watermarker.jpg', 'wb') as f:
             f.write(res.content)
-        show_avatar_path = 'cache/watermarker.png'
+        show_avatar_path = 'cache/watermarker.jpg'
         self.last_download_watermarker_timestamp = int(time.time())
         self.watermarker = show_avatar_path
 
