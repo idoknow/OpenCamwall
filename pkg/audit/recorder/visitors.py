@@ -49,10 +49,10 @@ def record_visitor():
 
                     pkg.database.database.get_inst().ensure_connection()
 
-                    sql = "insert into `events` (`type`,`timestamp`,`json`) values ('{}',{},'{}')".format(
-                        TYPE_VISITOR_INCREASE, int(time.time()), jsontext)
+                    sql = "insert into `events` (`type`, `timestamp`, `json`) values (%s, %s, %s)"
+                    values = (TYPE_VISITOR_INCREASE, int(time.time()), jsontext)
                     logging.info("记录空间访客:" + str(obj['data']))
-                    pkg.database.database.get_inst().cursor.execute(sql)
+                    pkg.database.database.get_inst().cursor.execute(sql, values)
                     last_record_total = obj["data"]["total"]
                 finally:
                     pkg.database.database.get_inst().release()
@@ -68,7 +68,8 @@ def initialize_visitor_recorder():
     try:
         pkg.database.database.get_inst().ensure_connection()
         pkg.database.database.get_inst().cursor.execute(
-            "select `json` from `events` where `type`='" + TYPE_VISITOR_INCREASE + "' order by id desc limit 1;")
+            "select `json` from `events` where `type`=%s order by id desc limit 1;",
+            (TYPE_VISITOR_INCREASE,))
         lsjson = pkg.database.database.get_inst().cursor.fetchone()
     finally:
         pkg.database.database.get_inst().release()

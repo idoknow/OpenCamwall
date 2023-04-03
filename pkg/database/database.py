@@ -138,26 +138,28 @@ class MySQLConnection:
         self.acquire()
         try:
             self.ensure_connection()
-            sql = "select * from `accounts` where `qq`='{}'".format(escape_string(str(uin)))
-            self.cursor.execute(sql)
+            sql = "select * from `accounts` where `qq`=%s"
+            values = (escape_string(str(uin)),)
+            self.cursor.execute(sql, values)
             results = self.cursor.fetchall()
             for _ in results:
                 # 只要有
                 raise Exception("该QQ号已经绑定了微信号,请进入小程序尝试刷新,若要解除绑定请发送 #解绑")
 
-            sql = "insert into `accounts` (`qq`,`openid`,`timestamp`) values ('{}','{}',{})".format(
-                escape_string(str(uin)), escape_string(openid),
-                int(time.time()))
-            self.cursor.execute(sql)
+            sql = "insert into `accounts` (`qq`, `openid`, `timestamp`) values (%s, %s, %s)"
+            values = (escape_string(str(uin)), escape_string(openid), int(time.time()))
+            self.cursor.execute(sql, values)
 
             # 插入到绑定表完成了,检查账户密码表
-            sql = "select * from `uniauth` where `openid`='{}'".format(escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "select * from `uniauth` where `openid`=%s"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
+
             results = self.cursor.fetchall()
             if len(results) == 0:
-                sql = "insert into `uniauth` (`openid`,`timestamp`) values ('{}',{})".format(escape_string(openid),
-                                                                                             int(time.time()))
-                self.cursor.execute(sql)
+                sql = "insert into `uniauth` (`openid`, `timestamp`) values (%s, %s)"
+                values = (escape_string(openid), int(time.time()))
+                self.cursor.execute(sql, values)
         finally:
             self.release()
         # self.connection.commit()
@@ -166,8 +168,9 @@ class MySQLConnection:
         self.acquire()
         try:
             self.ensure_connection()
-            sql = "delete from `accounts` where `qq`='{}'".format(escape_string(str(uin)))
-            self.cursor.execute(sql)
+            sql = "delete from `accounts` where `qq`=%s"
+            values = (escape_string(str(uin)),)
+            self.cursor.execute(sql, values)
         finally:
             self.release()
         # self.connection.commit()
@@ -176,15 +179,17 @@ class MySQLConnection:
         self.acquire()
         try:
             self.ensure_connection()
-            sql = "insert into `posts` (`openid`,`qq`,`timestamp`,`text`,`media`,`anonymous`) values ('{}','{}',{},'{}'," \
-                  "'{}',{})".format(escape_string(openid), escape_string(str(qq)), int(time.time()),
-                                    escape_string(text), escape_string(media), 1 if anonymous else 0)
-            self.cursor.execute(sql)
+            sql = "insert into `posts` (`openid`, `qq`, `timestamp`, `text`, `media`, `anonymous`) values (%s, %s, %s, %s, %s, %s)"
+            values = (
+                escape_string(openid), escape_string(str(qq)), int(time.time()), escape_string(text),
+                escape_string(media),
+                1 if anonymous else 0)
+            self.cursor.execute(sql, values)
             # self.connection.commit()
 
-            sql = "select `id` from `posts` where `openid`='{}' order by `id` desc limit 1".format(
-                escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "select `id` from `posts` where `openid`=%s order by `id` desc limit 1"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
             result = self.cursor.fetchone()
         finally:
             self.release()
@@ -273,8 +278,9 @@ class MySQLConnection:
         try:
 
             self.ensure_connection()
-            sql = "select `status` from `posts` where `id`={}".format(post_id)
-            self.cursor.execute(sql)
+            sql = "select `status` from `posts` where `id`=%s"
+            values = (post_id,)
+            self.cursor.execute(sql, values)
             result = self.cursor.fetchone()
         finally:
             self.release()
@@ -290,11 +296,13 @@ class MySQLConnection:
         try:
 
             self.ensure_connection()
-            sql = "update `posts` set `status`='{}' where `id`={}".format(escape_string(new_status), post_id)
-            self.cursor.execute(sql)
+            sql = "update `posts` set `status`=%s where `id`=%s"
+            values = (escape_string(new_status), post_id)
+            self.cursor.execute(sql, values)
             if review != '':
-                sql = "update `posts` set `review`='{}' where `id`={}".format(escape_string(review), post_id)
-                self.cursor.execute(sql)
+                sql = "update `posts` set `review`=%s where `id`=%s"
+                values = (escape_string(review), post_id)
+                self.cursor.execute(sql, values)
         finally:
             self.release()
 
@@ -354,17 +362,20 @@ class MySQLConnection:
         try:
             self.ensure_connection()
             # 检查账户密码表,不存在则插入
-            sql = "select * from `uniauth` where `openid`='{}'".format(escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "select * from `uniauth` where `openid`=%s"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
             results = self.cursor.fetchall()
             if len(results) == 0:
-                sql = "insert into `uniauth` (`openid`,`timestamp`) values ('{}',{})".format(escape_string(openid),
-                                                                                             int(time.time()))
+                sql = "insert into `uniauth` (`openid`, `timestamp`) values (%s, %s)"
+                values = (escape_string(openid), int(time.time()))
+                self.cursor.execute(sql, values)
                 self.cursor.execute(sql)
 
             # 检查是否被封禁
-            sql = "select * from `banlist` where `openid`='{}' order by id desc".format(escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "select * from `banlist` where `openid`=%s order by id desc"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
             ban = self.cursor.fetchone()
             if ban is not None:
                 start_time = ban[2]
@@ -377,8 +388,9 @@ class MySQLConnection:
                     result['reason'] = reason
                     return result
 
-            sql = "select * from `accounts` where `openid`='{}'".format(escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "select * from `accounts` where `openid`=%s"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
             accounts = self.cursor.fetchall()
         finally:
             self.release()
@@ -401,8 +413,9 @@ class MySQLConnection:
         try:
 
             self.ensure_connection()
-            sql = "select * from `constants` where `key`='{}'".format(escape_string(key))
-            self.cursor.execute(sql)
+            sql = "select * from `constants` where `key`=%s"
+            values = (escape_string(key),)
+            self.cursor.execute(sql, values)
             row = self.cursor.fetchone()
         finally:
             self.release()
@@ -511,8 +524,9 @@ class MySQLConnection:
         try:
 
             self.ensure_connection()
-            sql = "select * from `static_data` where `key`='{}'".format(escape_string(key))
-            self.cursor.execute(sql)
+            sql = "select * from `static_data` where `key`=%s"
+            values = (escape_string(key),)
+            self.cursor.execute(sql, values)
             row = self.cursor.fetchone()
         finally:
             self.release()
@@ -608,18 +622,15 @@ class MySQLConnection:
         try:
 
             self.ensure_connection()
-            sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`)" \
-                  " values('{}','{}',{},'{}')".format(escape_string(openid),
-                                                      escape_string(content),
-                                                      int(time.time()),
-                                                      escape_string(media))
+            sql = "insert into `feedback`(`openid`,`content`,`timestamp`,`media`) values(%s,%s,%s,%s)"
+            values = (escape_string(openid), escape_string(content), int(time.time()), escape_string(media))
 
             temp_thread = threading.Thread(target=pkg.routines.feedback_routines.receive_feedback,
                                            args=(openid, content),
                                            daemon=True)
             temp_thread.start()
 
-            self.cursor.execute(sql)
+            self.cursor.execute(sql, values)
         finally:
             self.release()
         return 'success'
@@ -635,8 +646,9 @@ class MySQLConnection:
         self.acquire()
         try:
             self.ensure_connection()
-            sql = "select * from `uniauth` where `openid`='{}'".format(escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "select * from `uniauth` where `openid`=%s"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
             row = self.cursor.fetchone()
             if row is None:
                 result['result'] = 'fail:没有此账户'
@@ -657,9 +669,9 @@ class MySQLConnection:
         self.acquire()
         try:
             self.ensure_connection()
-            sql = "update `uniauth` set `password`='{}' where `openid`='{}'".format(escape_string(password),
-                                                                                    escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "update `uniauth` set `password`=%s where `openid`=%s"
+            values = (escape_string(password), escape_string(openid))
+            self.cursor.execute(sql, values)
         finally:
             self.release()
         return 'success'
@@ -674,16 +686,18 @@ class MySQLConnection:
         try:
             self.ensure_connection()
             # 从accounts表检出此qq号的openid
-            sql = "select `openid` from `uniauth` where `id`={}".format(int(uid) - 10000)
-            self.cursor.execute(sql)
+            sql = "select `openid` from `uniauth` where `id`=%s"
+            values = (int(uid) - 10000,)
+            self.cursor.execute(sql, values)
             row = self.cursor.fetchone()
             if row is None:
                 result['result'] = 'fail:没有此账户'
                 return result
             openid = row[0]
             # 从uniauth表检出此openid的密码
-            sql = "select * from `uniauth` where `openid`='{}'".format(escape_string(openid))
-            self.cursor.execute(sql)
+            sql = "select * from `uniauth` where `openid`=%s"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
             row = self.cursor.fetchone()
             if row is None:
                 result['result'] = 'fail:无此账户'
@@ -712,9 +726,9 @@ class MySQLConnection:
         self.acquire()
         try:
             self.ensure_connection()
-            sql = "select `eid` from `emotions` where `pid`={}".format(int(post_id))
-            # print(sql)
-            self.cursor.execute(sql)
+            sql = "select `eid` from `emotions` where `pid`=%s"
+            values = (int(post_id),)
+            self.cursor.execute(sql, values)
             row = self.cursor.fetchone()
             if row is None:
                 result['result'] = 'fail:没有记录在表的此稿件对应的说说'
@@ -734,19 +748,18 @@ class MySQLConnection:
         self.acquire()
         try:
             self.ensure_connection()
+            # Insert statement
             sql = "insert into `stu_work_tickets`(`timestamp`,`launcher`,`title`,`contact`,`content`,`media`)" \
-                  " values ({},'{}','{}','{}','{}','{}')".format(int(time.time()),
-                                                                 escape_string(openid),
-                                                                 escape_string(title),
-                                                                 escape_string(contact),
-                                                                 escape_string(content),
-                                                                 media)
-            self.cursor.execute(sql)
+                  " values (%s,%s,%s,%s,%s,%s)"
+            values = (int(time.time()), escape_string(openid), escape_string(title), escape_string(contact),
+                      escape_string(content), media)
+            self.cursor.execute(sql, values)
 
-            sql = "select id from `stu_work_tickets` where `launcher` = '{}' order by id desc limit 1" \
-                .format(escape_string(openid))
+            # Select statement
+            sql = "select id from `stu_work_tickets` where `launcher` = %s order by id desc limit 1"
+            values = (escape_string(openid),)
+            self.cursor.execute(sql, values)
 
-            self.cursor.execute(sql)
             row = self.cursor.fetchone()
             result['id'] = row[0]
         finally:
@@ -856,9 +869,9 @@ class MySQLConnection:
 
         try:
             self.ensure_connection()
-            sql = "insert into `stu_work_follow_relationships`(`timestamp`, `openid`,`target`) values ({},'{}',{})".format(
-                int(time.time()), escape_string(openid), target)
-            self.cursor.execute(sql)
+            sql = "insert into `stu_work_follow_relationships`(`timestamp`, `openid`,`target`) values (%s,%s,%s)"
+            values = (int(time.time()), escape_string(openid), target)
+            self.cursor.execute(sql, values)
         finally:
             self.release()
 
@@ -873,9 +886,9 @@ class MySQLConnection:
 
         try:
             self.ensure_connection()
-            sql = "delete from `stu_work_follow_relationships` where `openid`='{}' and `target`={}" \
-                .format(escape_string(openid), target)
-            self.cursor.execute(sql)
+            sql = "delete from `stu_work_follow_relationships` where `openid`=%s and `target`=%s"
+            values = (escape_string(openid), target)
+            self.cursor.execute(sql, values)
         finally:
             self.release()
 
@@ -911,10 +924,10 @@ class MySQLConnection:
             self.ensure_connection()
 
             sql = "insert into `stu_work_replies`(`timestamp`,`openid`,`nick`,`target`,`content`,`type`)" \
-                  " values ({},'{}','{}',{},'{}','{}')".format(int(time.time()), escape_string(openid),
-                                                               escape_string(nick), target, escape_string(content),
-                                                               reply_type)
-            self.cursor.execute(sql)
+                  " values (%s,%s,%s,%s,%s,%s)"
+            values = (int(time.time()), escape_string(openid), escape_string(nick), target, escape_string(content),
+                      reply_type)
+            self.cursor.execute(sql, values)
         finally:
             self.release()
 

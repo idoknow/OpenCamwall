@@ -80,21 +80,22 @@ def analyze_history_heat_rate_and_heat():
             # 存数据库
             logging.info("分析日访客量完成")
 
-            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_rate';".format(
-                int(time.time()), json.dumps(data))
-            pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = %s, `json` = %s where `key` = 'history_heat_rate';"
+            values = (int(time.time()), json.dumps(data))
+            pkg.database.database.get_inst().cursor.execute(sql, values)
 
             logging.info("分析总访客量曲线完成")
 
-            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat';".format(
-                int(time.time()), json.dumps(data_heat))
-            pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = %s, `json` = %s where `key` = 'history_heat';"
+            values = (int(time.time()), json.dumps(data_heat))
+            pkg.database.database.get_inst().cursor.execute(sql, values)
 
             logging.info("分析总访客量每小时完成")
 
-            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_heat_per_hour';".format(
-                int(time.time()), json.dumps(data_heat_per_hour))
-            pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = %s, `json` = %s where `key` = 'history_heat_per_hour';"
+            values = (int(time.time()), json.dumps(data_heat_per_hour))
+            pkg.database.database.get_inst().cursor.execute(sql, values)
+
         finally:
             pkg.database.database.get_inst().release()
     except Exception as e:
@@ -130,9 +131,10 @@ def analyze_history_emo_posted():
 
             make_db_conn_sure()
 
-            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'history_emo_posted';".format(
-                int(time.time()), json.dumps(data))
-            pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = %s, `json` = %s where `key` = 'history_emo_posted';"
+            values = (int(time.time()), json.dumps(data))
+            pkg.database.database.get_inst().cursor.execute(sql, values)
+
         finally:
             pkg.database.database.get_inst().release()
     except Exception as e:
@@ -196,9 +198,10 @@ def analyze_visitor_heat():
         try:
             make_db_conn_sure()
 
-            sql = "update `static_data` set `timestamp` = {},`json`='{}' where `key` = 'visitor_heat';".format(
-                int(time.time()), json.dumps(data))
-            pkg.database.database.get_inst().cursor.execute(sql)
+            sql = "update `static_data` set `timestamp` = %s, `json` = %s where `key` = 'visitor_heat';"
+            values = (int(time.time()), json.dumps(data))
+            pkg.database.database.get_inst().cursor.execute(sql, values)
+
         finally:
             pkg.database.database.get_inst().release()
     else:

@@ -45,13 +45,9 @@
 
 ### 库
 
-* flask
-* requests
-* Pillow
-* pymysql
-* yiri-mirai
-* colorlog
-* fonttools
+```
+pip3 install -r requirements.txt
+```
 
 ### 框架
 
