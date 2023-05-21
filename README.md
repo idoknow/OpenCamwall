@@ -1,11 +1,12 @@
 # OpenCamwall
 
-
 [![OSCS Status](https://www.oscs1024.com/platform/badge//RockChinQ/OpenCamwall.git.svg?size=small)](https://www.murphysec.com/dr/SB70LFWPato6GXzInU)
 [![Licence](https://img.shields.io/github/license/RockChinQ/OpenCamwall)](https://github.com/RockChinQ/OpenCamwall/blob/master/LICENSE)
 
 继承自个人闭源项目camwall-backend  
 实现从接收投稿、稿件审核到发表说说的自动化
+
+- 欲粗略了解此系统功能及使用流程，请加群查看PPT: 226427026
 
 ~~前端即将开源,敬请期待!~~  
 前端开源计划已取消，此仓库仅供参考使用。
@@ -13,8 +14,8 @@
 ## 包
 
 - audit 系统数据分析
-    - analyzer 数据分析
-    - recorder 数据监控
+  - analyzer 数据分析
+  - recorder 数据监控
 - chat QQ机器人模块
 - database 包装数据库调用的方法
 - qzone 管理QQ空间登录、发表说说等功能
