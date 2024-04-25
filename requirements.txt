@@ -1,0 +1,7 @@
+flask
+requests
+Pillow
+pymysql
+yiri-mirai
+colorlog
+fonttools
